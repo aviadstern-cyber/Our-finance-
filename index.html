@@ -118,6 +118,25 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
   .compare-chart{height:220px}.compare-bar{width:22px}
 }
 
+.dynamic-list{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.dynamic-row{display:grid;grid-template-columns:1.25fr .85fr .7fr auto;gap:9px;align-items:end;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.dynamic-row.invest-row{grid-template-columns:1.2fr .8fr .8fr .6fr auto}
+.dynamic-row.recurring-row{grid-template-columns:1.15fr .8fr .75fr .55fr auto}
+.row-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.row-actions button{padding:8px 10px;font-size:12px}
+.summary-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.info-box{background:#f4f1ec;border:1px solid var(--line);border-radius:16px;padding:14px;line-height:1.6}
+.help-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.help-card{background:#f7f4ef;border:1px solid var(--line);border-radius:16px;padding:14px}
+.help-card strong{display:block;margin-bottom:6px}
+.investment-table{display:flex;flex-direction:column;gap:9px;margin-top:12px}
+.investment-item{display:grid;grid-template-columns:1.2fr repeat(4,.8fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.investment-item .metric{font-size:12px;color:var(--muted)}
+.investment-item .metric strong{display:block;color:var(--ink);font-size:15px;margin-top:3px;direction:ltr;text-align:right}
+.good-text{color:var(--good)!important}.bad-text{color:var(--bad)!important}
+@media(max-width:900px){.dynamic-row,.dynamic-row.invest-row,.dynamic-row.recurring-row,.investment-item,.summary-strip,.help-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.dynamic-row,.dynamic-row.invest-row,.dynamic-row.recurring-row,.investment-item,.summary-strip,.help-grid{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -197,7 +216,22 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
   <section id="income" class="view">
     <div class="card">
       <h2>הכנסות ושכר</h2>
-      <div class="note">כל שדה ניתן לעריכה. הזיני את הנתונים מתלושי השכר; המערכת מחשבת אוטומטית ברוטו → נטו → הפרשות.</div>
+      <div class="note">אפשר להוסיף כמה מקורות הכנסה שרוצים, לתת לכל מקור שם משלכם ולערוך אותו בכל חודש. הסכומים מצטרפים אוטומטית להכנסה ברוטו של החודש.</div>
+
+      <div class="section-title">מקורות הכנסה</div>
+      <div class="dynamic-row">
+        <div class="field"><label>שם מקור ההכנסה</label><input id="incomeSourceName" placeholder="לדוגמה: משכורת, פרויקט, עבודה נוספת"></div>
+        <div class="field"><label>סכום</label><input id="incomeSourceAmount" type="number" min="0" step="0.01" placeholder="0"></div>
+        <div class="field"><label>מטבע</label><select id="incomeSourceCurrency"><option value="ILS">₪</option><option value="USD">$</option></select></div>
+        <div class="row-actions"><button id="addIncomeSource" type="button">+ הוסף מקור</button></div>
+      </div>
+      <div id="incomeSourcesList" class="dynamic-list"></div>
+      <div class="summary-strip">
+        <div class="card blue"><div class="label">סה״כ הכנסות ברוטו</div><div class="big-result" id="incomeSourcesTotal">₪0</div></div>
+      </div>
+
+      <div class="section-title">מסים, ניכויים והפרשות</div>
+      <div class="note">הזינו כאן את הסכומים הרלוונטיים מתלושי השכר. המערכת מפחיתה את ניכויי העובד מסך ההכנסות ומציגה את הנטו.</div>
       <div class="formgrid" id="incomeFields"></div>
       <div class="actions"><button class="save">שמור חודש</button></div>
     </div>
@@ -210,6 +244,20 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
       <div class="card lav category-card" data-category="fun"><h3>פנאי ולא חובה</h3><div class="note">מסעדות, באולינג, בגדים, בילויים, חופשות וקניות</div><div class="cat-total" id="funTotal">₪0</div><div class="arrow">לחצי כדי לפתוח פירוט ←</div></div>
       <div class="card gold category-card" data-category="invest"><h3>חיסכון והשקעות</h3><div class="note">הפקדה לתיק השקעות, קרן חירום, חיסכון למטרה ועוד</div><div class="cat-total" id="investTotal">₪0</div><div class="arrow">לחצי כדי לפתוח פירוט ←</div></div>
     </div>
+    <div class="section-title">הוצאות קבועות</div>
+    <div class="card">
+      <div class="note">שומרים כאן הוצאות שחוזרות. אפשר להוסיף אותן לחודש המוצג בלחיצה אחת, ובפתיחת חודש חדש המערכת תציע להעתיק אותן אוטומטית.</div>
+      <div class="dynamic-row recurring-row" style="margin-top:12px">
+        <div class="field"><label>שם ההוצאה</label><input id="recurringName" placeholder="לדוגמה: אינטרנט"></div>
+        <div class="field"><label>סכום</label><input id="recurringAmount" type="number" min="0" step="0.01" placeholder="0"></div>
+        <div class="field"><label>קטגוריה</label><select id="recurringCategory"><option value="home">בית ומחיה</option><option value="fun">פנאי ולא חובה</option></select></div>
+        <div class="field"><label>מטבע</label><select id="recurringCurrency"><option value="ILS">₪</option><option value="USD">$</option></select></div>
+        <div class="row-actions"><button id="addRecurring" type="button">+ הוסף</button></div>
+      </div>
+      <div class="actions"><button id="applyRecurring" class="secondary" type="button">הוסף את ההוצאות הקבועות לחודש המוצג</button></div>
+      <div id="recurringList" class="dynamic-list"></div>
+    </div>
+
     <div class="section-title">העסקאות האחרונות החודש</div>
     <div class="card"><div id="recentTransactions" class="tx-list"></div></div>
   </section>
@@ -255,8 +303,33 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
   <section id="investments" class="view">
     <div class="card">
       <h2>השקעות ונכסים</h2>
-      <div class="note">הזיני את יתרות סוף החודש. אפשר לעבוד בשקלים או בדולרים — שדות ההזנה כאן נשמרים כמטבע בסיס בשקלים, ובתצוגה תראי גם את ההמרה לדולר.</div>
+      <div class="note">כאן אפשר לבנות את רשימת ההשקעות שלכם בעצמכם. לכל השקעה מזינים כמה כסף הושקע וכמה היא שווה עכשיו; המערכת מחשבת רווח/הפסד ואת חלקה היחסי בתיק.</div>
+
+      <div class="section-title">נכסים כלליים</div>
       <div class="formgrid" id="assetFields"></div>
+
+      <div class="section-title">ההשקעות שלי</div>
+      <div class="dynamic-row invest-row">
+        <div class="field"><label>שם ההשקעה</label><input id="investmentName" placeholder="שם חופשי לבחירתכם"></div>
+        <div class="field"><label>כמה הושקע</label><input id="investmentCost" type="number" min="0" step="0.01" placeholder="0"></div>
+        <div class="field"><label>שווי נוכחי</label><input id="investmentCurrent" type="number" min="0" step="0.01" placeholder="0"></div>
+        <div class="field"><label>מטבע</label><select id="investmentCurrency"><option value="ILS">₪</option><option value="USD">$</option></select></div>
+        <div class="row-actions"><button id="addInvestment" type="button">+ הוסף השקעה</button></div>
+      </div>
+      <div id="investmentPositions" class="investment-table"></div>
+
+      <div class="summary-strip">
+        <div class="card blue"><div class="label">שווי תיק נוכחי</div><div class="big-result" id="portfolioValue">₪0</div></div>
+        <div class="card teal"><div class="label">סה״כ הושקע</div><div class="big-result" id="portfolioCost">₪0</div></div>
+        <div class="card gold"><div class="label">רווח / הפסד</div><div class="big-result" id="portfolioGain">₪0</div><div class="note" id="portfolioGainPct">0%</div></div>
+      </div>
+
+      <div class="section-title">חלוקת תיק ההשקעות</div>
+      <div class="pie-layout card">
+        <div id="portfolioPie" class="pie"></div>
+        <div id="portfolioPieLegend" class="pie-legend"></div>
+      </div>
+
       <div class="section-title">מצב הון</div>
       <div class="grid3">
         <div class="card blue"><div class="label">סה״כ נכסים</div><div class="big-result" id="assetsTotal">₪0</div></div>
@@ -279,6 +352,11 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
   </section>
 
   <section id="statements" class="view">
+    <div class="help-grid">
+      <div class="help-card"><strong>דוח הכנסות</strong><div class="note">מראה מה נכנס ומה ירד במהלך החודש: הכנסות, ניכויים, הוצאות והעודף שנוצר.</div></div>
+      <div class="help-card"><strong>מאזן</strong><div class="note">תמונת מצב של מה שיש לכם בנקודת זמן: מזומן, השקעות ונכסים, פחות התחייבויות. התוצאה היא השווי הנקי.</div></div>
+      <div class="help-card"><strong>תזרים מזומנים</strong><div class="note">מראה איך הכסף זז בפועל: כמה נכנס, כמה יצא למחיה ולפנאי, כמה הועבר להשקעות וכמה נשאר חופשי.</div></div>
+    </div>
     <div class="grid3">
       <div class="card">
         <h3>דוח הכנסות</h3>
@@ -311,6 +389,7 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
     <div class="panelrow">
       <div class="card">
         <h2>תחזית עתידית</h2>
+        <div class="info-box" style="margin-bottom:14px"><strong>מה זה DCF?</strong><br>DCF הוא חישוב שמתרגם כסף עתידי לערך שלו היום. במערכת הזו הוא לוקח את התזרים החופשי שאתם צפויים לייצר בשנים הבאות ומפחית ממנו את השפעת הזמן לפי שיעור ההיוון. ככל ששיעור ההיוון גבוה יותר, הערך הנוכחי של הכסף העתידי נמוך יותר.</div>
         <div class="formgrid">
           <div class="field"><label>צמיחת הכנסה שנתית %</label><input id="growthIncome" type="number" step="0.1" value="3"></div>
           <div class="field"><label>אינפלציית הוצאות %</label><input id="inflation" type="number" step="0.1" value="2.5"></div>
@@ -384,7 +463,7 @@ const defaults=()=>({
   gross1:0,gross2:0,tax:0,ni:0,health:0,pensionEmployee:0,studyEmployee:0,otherDed:0,
   employerPension:0,employerStudy:0,employerOther:0,
   cash:0,investments:0,otherAssets:0,debt:0,
-  transactions:[]
+  transactions:[],incomeSources:[],investmentPositions:[]
 });
 
 let raw=localStorage.getItem(storageKey);
@@ -414,8 +493,10 @@ if(!raw){
 let db=raw?JSON.parse(raw):{};
 const budgetKey=storageKey+'_budgets';
 const goalsKey=storageKey+'_investment_goals';
+const recurringKey=storageKey+'_recurring_expenses';
 let budgets=JSON.parse(localStorage.getItem(budgetKey)||'{}');
 let investmentGoals=JSON.parse(localStorage.getItem(goalsKey)||'[]');
+let recurringExpenses=JSON.parse(localStorage.getItem(recurringKey)||'[]');
 let current=ym(today);
 if(!db[current]) db[current]=defaults();
 
@@ -424,11 +505,11 @@ document.getElementById('displayCurrency').value=settings.displayCurrency||'ILS'
 document.getElementById('fxRate').value=settings.fxRate||3.5;
 
 const incomeDefs=[
- ['gross1','ברוטו — אדם 1'],['gross2','ברוטו — אדם 2'],['tax','מס הכנסה'],['ni','ביטוח לאומי'],['health','מס בריאות'],
+ ['tax','מס הכנסה'],['ni','ביטוח לאומי'],['health','מס בריאות'],
  ['pensionEmployee','פנסיה עובד'],['studyEmployee','קרן השתלמות עובד'],['otherDed','ניכויים אחרים'],
  ['employerPension','פנסיה מעסיק'],['employerStudy','קרן השתלמות מעסיק'],['employerOther','הטבות / הפרשות מעסיק אחרות']
 ];
-const assetDefs=[['cash','מזומן ובנק'],['investments','שווי תיק השקעות'],['otherAssets','נכסים אחרים'],['debt','הלוואות / התחייבויות']];
+const assetDefs=[['cash','מזומן ובנק'],['otherAssets','נכסים אחרים'],['debt','הלוואות / התחייבויות']];
 
 function makeFields(el,defs){
  el.innerHTML='';
@@ -440,6 +521,104 @@ function makeFields(el,defs){
 }
 makeFields(document.getElementById('incomeFields'),incomeDefs);
 makeFields(document.getElementById('assetFields'),assetDefs);
+
+function ensureMonthData(m=current){
+ const d=db[m]||(db[m]=defaults());
+ d.transactions=d.transactions||[];
+ if(!Array.isArray(d.incomeSources))d.incomeSources=[];
+ if(!d.incomeSources.length&&(num(d.gross1)>0||num(d.gross2)>0)){
+   if(num(d.gross1)>0)d.incomeSources.push({id:'legacy1-'+m,name:'אדם 1',amountILS:num(d.gross1)});
+   if(num(d.gross2)>0)d.incomeSources.push({id:'legacy2-'+m,name:'אדם 2',amountILS:num(d.gross2)});
+   d.gross1=0;d.gross2=0;
+ }
+ if(!Array.isArray(d.investmentPositions))d.investmentPositions=[];
+ if(!d.investmentPositions.length&&num(d.investments)>0){d.investmentPositions.push({id:'legacy-invest-'+m,name:'תיק השקעות',costILS:num(d.investments),currentILS:num(d.investments)});d.investments=0;}
+ return d;
+}
+Object.keys(db).forEach(m=>ensureMonthData(m));
+
+function incomeTotal(m=current){return ensureMonthData(m).incomeSources.reduce((sum,x)=>sum+num(x.amountILS),0)}
+function portfolioCurrent(m=current){return ensureMonthData(m).investmentPositions.reduce((sum,x)=>sum+num(x.currentILS),0)}
+function portfolioCost(m=current){return ensureMonthData(m).investmentPositions.reduce((sum,x)=>sum+num(x.costILS),0)}
+
+function addIncomeSource(){
+ const name=document.getElementById('incomeSourceName').value.trim();
+ const amount=num(document.getElementById('incomeSourceAmount').value),cur=document.getElementById('incomeSourceCurrency').value;
+ if(!name){alert('כתבו שם למקור ההכנסה');return} if(amount<=0){alert('הזינו סכום גדול מ־0');return}
+ ensureMonthData().incomeSources.push({id:String(Date.now())+Math.random().toString(16).slice(2),name,amountILS:toILS(amount,cur)});
+ document.getElementById('incomeSourceName').value='';document.getElementById('incomeSourceAmount').value='';persist();render();
+}
+function editIncomeSource(id){
+ const x=ensureMonthData().incomeSources.find(x=>String(x.id)===String(id));if(!x)return;
+ const name=prompt('שם מקור ההכנסה',x.name);if(name===null)return;
+ const amount=prompt('סכום בשקלים',String(Math.round(x.amountILS)));if(amount===null)return;
+ if(!name.trim()||num(amount)<0)return;x.name=name.trim();x.amountILS=num(amount);persist();render();
+}
+function deleteIncomeSource(id){ensureMonthData().incomeSources=ensureMonthData().incomeSources.filter(x=>String(x.id)!==String(id));persist();render()}
+function renderIncomeSources(){
+ const box=document.getElementById('incomeSourcesList'),items=ensureMonthData().incomeSources;
+ setMoney('incomeSourcesTotal',incomeTotal());
+ if(!items.length){box.innerHTML='<div class="empty">עדיין אין מקורות הכנסה בחודש הזה. הוסיפו מקור ראשון למעלה.</div>';return}
+ box.innerHTML=items.map(x=>`<div class="tx-item"><div class="tx-main"><div class="tx-title">${escapeHtml(x.name)}</div><div class="tx-meta">מקור הכנסה</div></div><div style="display:flex;align-items:center;gap:8px"><strong dir="ltr">${money(x.amountILS)}</strong><button class="secondary edit-income" data-id="${x.id}" type="button">עריכה</button><button class="tx-del delete-income" data-id="${x.id}" type="button">מחיקה</button></div></div>`).join('');
+ box.querySelectorAll('.edit-income').forEach(b=>b.addEventListener('click',()=>editIncomeSource(b.dataset.id)));
+ box.querySelectorAll('.delete-income').forEach(b=>b.addEventListener('click',()=>deleteIncomeSource(b.dataset.id)));
+}
+
+function addInvestment(){
+ const name=document.getElementById('investmentName').value.trim(),cost=num(document.getElementById('investmentCost').value),value=num(document.getElementById('investmentCurrent').value),cur=document.getElementById('investmentCurrency').value;
+ if(!name){alert('כתבו שם להשקעה');return}if(cost<0||value<0){alert('הסכומים לא יכולים להיות שליליים');return}
+ ensureMonthData().investmentPositions.push({id:String(Date.now())+Math.random().toString(16).slice(2),name,costILS:toILS(cost,cur),currentILS:toILS(value,cur)});
+ document.getElementById('investmentName').value='';document.getElementById('investmentCost').value='';document.getElementById('investmentCurrent').value='';persist();render();
+}
+function editInvestment(id){
+ const x=ensureMonthData().investmentPositions.find(x=>String(x.id)===String(id));if(!x)return;
+ const name=prompt('שם ההשקעה',x.name);if(name===null)return;
+ const cost=prompt('כמה הושקע — בשקלים',String(Math.round(x.costILS)));if(cost===null)return;
+ const value=prompt('שווי נוכחי — בשקלים',String(Math.round(x.currentILS)));if(value===null)return;
+ if(!name.trim()||num(cost)<0||num(value)<0)return;x.name=name.trim();x.costILS=num(cost);x.currentILS=num(value);persist();render();
+}
+function deleteInvestment(id){
+ const x=ensureMonthData().investmentPositions.find(x=>String(x.id)===String(id));if(!x)return;
+ if(!confirm(`למחוק את ההשקעה "${x.name}"?`))return;
+ ensureMonthData().investmentPositions=ensureMonthData().investmentPositions.filter(x=>String(x.id)!==String(id));persist();render();
+}
+function renderInvestments(){
+ const items=ensureMonthData().investmentPositions,box=document.getElementById('investmentPositions');
+ const totalValue=portfolioCurrent(),totalCost=portfolioCost(),gain=totalValue-totalCost,gainPct=totalCost?gain/totalCost:0;
+ setMoney('portfolioValue',totalValue);setMoney('portfolioCost',totalCost);setMoney('portfolioGain',gain);
+ const pctEl=document.getElementById('portfolioGainPct');pctEl.textContent=(gain>=0?'+':'')+pct(gainPct);pctEl.className='note '+(gain>=0?'good-text':'bad-text');
+ if(!items.length)box.innerHTML='<div class="empty">עדיין לא הוספתם השקעות. אפשר לתת לכל השקעה שם משלכם.</div>';
+ else box.innerHTML=items.map(x=>{const gain=num(x.currentILS)-num(x.costILS),gp=num(x.costILS)?gain/num(x.costILS):0;return `<div class="investment-item"><div><strong>${escapeHtml(x.name)}</strong><div class="note">${totalValue?pct(num(x.currentILS)/totalValue):'0%'} מהתיק</div></div><div class="metric">הושקע<strong>${money(x.costILS)}</strong></div><div class="metric">שווי נוכחי<strong>${money(x.currentILS)}</strong></div><div class="metric">רווח / הפסד<strong class="${gain>=0?'good-text':'bad-text'}">${gain>=0?'+':''}${money(gain)}</strong></div><div class="metric">תשואה<strong class="${gain>=0?'good-text':'bad-text'}">${gain>=0?'+':''}${pct(gp)}</strong></div><div class="row-actions"><button class="secondary edit-investment" data-id="${x.id}" type="button">עריכה</button><button class="tx-del delete-investment" data-id="${x.id}" type="button">מחיקה</button></div></div>`}).join('');
+ box.querySelectorAll('.edit-investment').forEach(b=>b.addEventListener('click',()=>editInvestment(b.dataset.id)));
+ box.querySelectorAll('.delete-investment').forEach(b=>b.addEventListener('click',()=>deleteInvestment(b.dataset.id)));
+ const pie=document.getElementById('portfolioPie'),legend=document.getElementById('portfolioPieLegend');
+ if(!totalValue){pie.style.background='#e8e3dc';legend.innerHTML='<div class="empty">הוסיפו השקעות כדי לראות את חלוקת התיק.</div>';return}
+ let acc=0,segments=[];items.filter(x=>num(x.currentILS)>0).forEach((x,i)=>{const start=acc/totalValue*360;acc+=num(x.currentILS);segments.push(`${pieColors[i%pieColors.length]} ${start}deg ${acc/totalValue*360}deg`)});pie.style.background=`conic-gradient(${segments.join(',')})`;
+ legend.innerHTML=items.filter(x=>num(x.currentILS)>0).map((x,i)=>`<div class="pie-line"><span class="pie-color" style="background:${pieColors[i%pieColors.length]}"></span><span>${escapeHtml(x.name)} <span class="note">(${pct(num(x.currentILS)/totalValue)})</span></span><strong dir="ltr">${money(x.currentILS)}</strong></div>`).join('');
+}
+
+function addRecurring(){
+ const name=document.getElementById('recurringName').value.trim(),amount=num(document.getElementById('recurringAmount').value),category=document.getElementById('recurringCategory').value,cur=document.getElementById('recurringCurrency').value;
+ if(!name){alert('כתבו שם להוצאה הקבועה');return}if(amount<=0){alert('הזינו סכום גדול מ־0');return}
+ recurringExpenses.push({id:String(Date.now())+Math.random().toString(16).slice(2),name,amountILS:toILS(amount,cur),category});
+ document.getElementById('recurringName').value='';document.getElementById('recurringAmount').value='';persist();renderRecurring();
+}
+function editRecurring(id){
+ const x=recurringExpenses.find(x=>String(x.id)===String(id));if(!x)return;
+ const name=prompt('שם ההוצאה הקבועה',x.name);if(name===null)return;const amount=prompt('סכום בשקלים',String(Math.round(x.amountILS)));if(amount===null)return;
+ if(!name.trim()||num(amount)<=0)return;x.name=name.trim();x.amountILS=num(amount);persist();renderRecurring();
+}
+function deleteRecurring(id){recurringExpenses=recurringExpenses.filter(x=>String(x.id)!==String(id));persist();renderRecurring()}
+function renderRecurring(){
+ const box=document.getElementById('recurringList');if(!recurringExpenses.length){box.innerHTML='<div class="empty">אין עדיין הוצאות קבועות שמורות.</div>';return}
+ box.innerHTML=recurringExpenses.map(x=>`<div class="tx-item"><div class="tx-main"><div class="tx-title">${escapeHtml(x.name)}</div><div class="tx-meta">${escapeHtml(categoryInfo[x.category]?.title||'')}</div></div><div style="display:flex;align-items:center;gap:8px"><strong dir="ltr">${money(x.amountILS)}</strong><button class="secondary edit-recurring" data-id="${x.id}" type="button">עריכה</button><button class="tx-del delete-recurring" data-id="${x.id}" type="button">מחיקה</button></div></div>`).join('');
+ box.querySelectorAll('.edit-recurring').forEach(b=>b.addEventListener('click',()=>editRecurring(b.dataset.id)));box.querySelectorAll('.delete-recurring').forEach(b=>b.addEventListener('click',()=>deleteRecurring(b.dataset.id)));
+}
+function applyRecurringToMonth(m=current){
+ const d=ensureMonthData(m);let added=0;
+ recurringExpenses.forEach(x=>{if(!d.transactions.some(t=>String(t.recurringId||'')===String(x.id))){d.transactions.push({id:Date.now()+Math.random(),category:x.category,subcategory:'הוצאה קבועה',description:x.name,amount:x.amountILS,currency:'ILS',recurringId:x.id});added++}});
+ persist();render();return added;
+}
 
 function fx(){return Math.max(.0001,num(document.getElementById('fxRate').value)||3.5)}
 function toILS(amount,currency){return currency==='USD'?num(amount)*fx():num(amount)}
@@ -457,20 +636,22 @@ function txTotal(category,m=current){
 }
 function calc(m){
  const d=db[m]||defaults();
- const gross=num(d.gross1)+num(d.gross2);
+ const gross=incomeTotal(m);
  const deductions=num(d.tax)+num(d.ni)+num(d.health)+num(d.pensionEmployee)+num(d.studyEmployee)+num(d.otherDed);
  const net=gross-deductions;
  const home=txTotal('home',m), fun=txTotal('fun',m), invest=txTotal('invest',m);
  const emp=num(d.employerPension)+num(d.employerStudy)+num(d.employerOther);
  const free=net-home-fun-invest;
- const assets=num(d.cash)+num(d.investments)+num(d.otherAssets);
+ const investmentValue=portfolioCurrent(m);
+ const assets=num(d.cash)+investmentValue+num(d.otherAssets);
  const nw=assets-num(d.debt);
- return {gross,deductions,net,home,fun,invest,emp,free,assets,nw};
+ return {gross,deductions,net,home,fun,invest,emp,free,assets,nw,investmentValue};
 }
 function persist(){
  localStorage.setItem(storageKey,JSON.stringify(db));
  localStorage.setItem(budgetKey,JSON.stringify(budgets));
  localStorage.setItem(goalsKey,JSON.stringify(investmentGoals));
+ localStorage.setItem(recurringKey,JSON.stringify(recurringExpenses));
  localStorage.setItem(storageKey+'_settings',JSON.stringify({
    displayCurrency:document.getElementById('displayCurrency').value,
    fxRate:fx()
@@ -481,7 +662,7 @@ function saveInputs(){
  persist(); render();
 }
 function load(){
- const d=db[current]||defaults();
+ const d=ensureMonthData(current);
  document.querySelectorAll('[data-key]').forEach(i=>i.value=num(d[i.dataset.key]));
  render();
 }
@@ -675,9 +856,9 @@ function render(){
 
  setMoney('assetsTotal',c.assets);setMoney('debtTotal',d.debt);setMoney('netWorth2',c.nw);
  setMoney('sGross',c.gross);setMoney('sTax',c.deductions);setMoney('sNet',c.net);setMoney('sSpend',c.home+c.fun);setMoney('sSurplus',c.free+c.invest);
- setMoney('bCash',d.cash);setMoney('bInv',d.investments);setMoney('bOther',d.otherAssets);setMoney('bDebt',d.debt);setMoney('bNW',c.nw);
+ setMoney('bCash',d.cash);setMoney('bInv',c.investmentValue);setMoney('bOther',d.otherAssets);setMoney('bDebt',d.debt);setMoney('bNW',c.nw);
  setMoney('cIn',c.net);setMoney('cHome',c.home);setMoney('cFun',c.fun);setMoney('cInv',c.invest);setMoney('cFree',c.free);
- renderRecent(); renderTopExpenses(); renderBudgetEditors(); renderGoals(); forecast();
+ renderRecent(); renderTopExpenses(); renderBudgetEditors(); renderGoals(); renderIncomeSources(); renderInvestments(); renderRecurring(); forecast();
 }
 function forecast(){
  const c=calc(current),d=db[current];
@@ -740,11 +921,19 @@ document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
 }));
 document.querySelectorAll('.save').forEach(b=>b.addEventListener('click',saveInputs));
 document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>openCategory(el.dataset.category)));
-document.getElementById('monthSelect').addEventListener('change',e=>{saveInputs();current=e.target.value;load()});
+document.getElementById('monthSelect').addEventListener('change',e=>{const next=e.target.value;saveInputs();current=next;load()});
 document.getElementById('addMonth').addEventListener('click',()=>{
  const candidate=prompt('הקלידי חודש בפורמט YYYY-MM',ym(today));
  if(!candidate||!/^\d{4}-(0[1-9]|1[0-2])$/.test(candidate)){if(candidate)alert('הפורמט צריך להיות YYYY-MM');return}
- if(!db[candidate])db[candidate]=defaults();current=candidate;persist();load();
+ if(!db[candidate]){
+   const prevKey=Object.keys(db).filter(m=>m<candidate).sort().pop();
+   const fresh=defaults();
+   if(prevKey){const prevData=ensureMonthData(prevKey);fresh.incomeSources=(prevData.incomeSources||[]).map(x=>({...x,id:String(Date.now())+Math.random().toString(16).slice(2),amountILS:0}));fresh.investmentPositions=(prevData.investmentPositions||[]).map(x=>({...x,id:String(Date.now())+Math.random().toString(16).slice(2)}));}
+   db[candidate]=fresh;
+ }
+ current=candidate;
+ if(recurringExpenses.length&&confirm(`להוסיף לחודש ${monthLabel(candidate)} את ההוצאות הקבועות ששמרתם?`))applyRecurringToMonth(candidate);
+ persist();load();
 });
 document.getElementById('displayCurrency').addEventListener('change',()=>{persist();render()});
 document.getElementById('fxRate').addEventListener('change',()=>{persist();render()});
@@ -754,6 +943,10 @@ document.getElementById('closeModal').addEventListener('click',closeCategory);
 document.getElementById('categoryModal').addEventListener('click',e=>{if(e.target.id==='categoryModal')closeCategory()});
 document.getElementById('addTransaction').addEventListener('click',addTransaction);
 document.getElementById('addGoal').addEventListener('click',addGoal);
+document.getElementById('addIncomeSource').addEventListener('click',addIncomeSource);
+document.getElementById('addInvestment').addEventListener('click',addInvestment);
+document.getElementById('addRecurring').addEventListener('click',addRecurring);
+document.getElementById('applyRecurring').addEventListener('click',()=>{const n=applyRecurringToMonth(current);alert(n?`נוספו ${n} הוצאות קבועות לחודש המוצג`:'כל ההוצאות הקבועות כבר נמצאות בחודש הזה')});
 document.getElementById('customSub').addEventListener('click',()=>{
  const s=prompt('שם תת־הקטגוריה החדשה');if(!s||!s.trim())return;
  categoryInfo[activeCategory].subs.push(s.trim());
@@ -762,7 +955,7 @@ document.getElementById('customSub').addEventListener('click',()=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCategory()});
 
 document.getElementById('exportBackup').addEventListener('click',()=>{
- const payload={version:3,exportedAt:new Date().toISOString(),db,budgets,investmentGoals,settings:{
+ const payload={version:4,exportedAt:new Date().toISOString(),db,budgets,investmentGoals,recurringExpenses,settings:{
    displayCurrency:document.getElementById('displayCurrency').value,
    fxRate:fx()
  }};
@@ -783,6 +976,7 @@ document.getElementById('importBackup').addEventListener('change',async e=>{
    db=incoming;
    if(payload.budgets&&typeof payload.budgets==='object')budgets=payload.budgets;
    if(Array.isArray(payload.investmentGoals))investmentGoals=payload.investmentGoals;
+   if(Array.isArray(payload.recurringExpenses))recurringExpenses=payload.recurringExpenses;
    const months=Object.keys(db).sort();
    if(!db[current]&&months.length)current=months[months.length-1];
    if(payload.settings){
