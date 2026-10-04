@@ -138,19 +138,23 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
 @media(max-width:900px){.dynamic-row,.dynamic-row.invest-row,.dynamic-row.recurring-row,.investment-item,.summary-strip,.help-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.dynamic-row,.dynamic-row.invest-row,.dynamic-row.recurring-row,.investment-item,.summary-strip,.help-grid{grid-template-columns:1fr}}
 
-.forecast-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:14px;align-items:start}
+.forecast-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,1.3fr);gap:14px;align-items:start}
 .forecast-switch{display:inline-flex;gap:6px;background:#ece8e2;border:1px solid var(--line);border-radius:14px;padding:4px;margin:4px 0 16px}
 .forecast-switch button{background:transparent;color:var(--ink);padding:8px 14px;border-radius:10px}
 .forecast-switch button.active{background:var(--accent);color:#fff}
 .forecast-pane{display:none}.forecast-pane.active{display:block}
-.forecast-base{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}
+.forecast-base{display:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}.forecast-base.open{display:grid}
 .forecast-mini{border:1px solid var(--line);background:#fff;border-radius:14px;padding:12px}
 .forecast-mini span{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.forecast-mini strong{font-size:18px;direction:ltr;display:block;text-align:right}
 .compound-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}
 .compound-result{border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff}
 .compound-result span{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}.compound-result strong{font-size:22px;direction:ltr;display:block;text-align:right}
-@media(max-width:900px){.forecast-layout{grid-template-columns:1.25fr 1fr}.forecast-base,.compound-results{grid-template-columns:1fr 1fr}}
-@media(max-width:650px){.forecast-layout,.forecast-base,.compound-results{grid-template-columns:1fr}.forecast-switch{display:flex}.forecast-switch button{flex:1}}
+.asset-state-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:12px}
+.asset-state-card{border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff}.asset-state-card span{display:block;font-size:12px;color:var(--muted);margin-bottom:7px}.asset-state-card strong{font-size:23px;direction:ltr;display:block;text-align:right}
+.asset-edit-panel{display:none;margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:16px;background:#f7f4ef}.asset-edit-panel.open{display:block}
+.asset-status{margin-top:9px}
+@media(max-width:900px){.forecast-layout{grid-template-columns:1fr 1.15fr}.forecast-base,.compound-results,.asset-state-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){.forecast-layout,.forecast-base,.compound-results,.asset-state-grid{grid-template-columns:1fr}.forecast-switch{display:flex}.forecast-switch button{flex:1}}
 
 
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
@@ -166,7 +170,7 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
 .payslip-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
 .payslip-item{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:13px;border:1px solid var(--line);border-radius:16px;background:#fff}
 .file-meta{font-size:12px;color:var(--muted);margin-top:4px}
-.goal-create-grid{display:grid;grid-template-columns:1.2fr .8fr .8fr .8fr .55fr;gap:9px;align-items:end;margin-top:12px}
+.goal-create-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:end;margin-top:12px}.goal-create-grid .field:first-child{grid-column:1/-1}
 .fin-goals{display:flex;flex-direction:column;gap:10px;margin-top:14px}
 .fin-goal{border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff}
 .fin-goal-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
@@ -360,7 +364,22 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
       <div class="note">כאן אפשר לבנות את רשימת ההשקעות שלכם בעצמכם. לכל השקעה מזינים כמה כסף הושקע וכמה היא שווה עכשיו; המערכת מחשבת רווח/הפסד ואת חלקה היחסי בתיק.</div>
 
       <div class="section-title">נכסים כלליים</div>
-      <div class="formgrid" id="assetFields"></div>
+      <div class="note">מגדירים מצב פתיחה פעם אחת. לאחר מכן המזומן והבנק מתעדכנים אוטומטית לפי התזרים החודשי במערכת; נכסים אחרים והתחייבויות ממשיכים מהמצב האחרון עד שתבחרו לערוך אותם.</div>
+      <div class="asset-state-grid">
+        <div class="asset-state-card"><span>מזומן ובנק</span><strong id="assetCashAuto">₪0</strong></div>
+        <div class="asset-state-card"><span>נכסים אחרים</span><strong id="assetOtherAuto">₪0</strong></div>
+        <div class="asset-state-card"><span>הלוואות / התחייבויות</span><strong id="assetDebtAuto">₪0</strong></div>
+      </div>
+      <div class="actions"><button id="editAssetState" class="secondary" type="button">עריכת מצב</button><span class="badge" id="assetAutoStatus">—</span></div>
+      <div id="assetEditPanel" class="asset-edit-panel">
+        <div class="note" style="margin-bottom:10px">שמירה כאן קובעת את המצב בפועל לחודש המוצג. מהחודש הבא המערכת שוב תמשיך לעדכן אוטומטית.</div>
+        <div class="formgrid">
+          <div class="field"><label>מזומן ובנק (₪)</label><input id="assetEditCash" type="number" min="0" step="0.01"></div>
+          <div class="field"><label>נכסים אחרים (₪)</label><input id="assetEditOther" type="number" min="0" step="0.01"></div>
+          <div class="field"><label>הלוואות / התחייבויות (₪)</label><input id="assetEditDebt" type="number" min="0" step="0.01"></div>
+        </div>
+        <div class="actions"><button id="saveAssetState" type="button">שמור מצב לחודש זה</button><button id="cancelAssetEdit" class="secondary" type="button">ביטול</button></div>
+      </div>
 
       <div class="section-title">ההשקעות שלי</div>
       <div class="dynamic-row invest-row">
@@ -389,8 +408,6 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
         <div class="card blue"><div class="label">סה״כ נכסים</div><div class="big-result" id="assetsTotal">₪0</div></div>
         <div class="card rose"><div class="label">סה״כ התחייבויות</div><div class="big-result" id="debtTotal">₪0</div></div>
       </div>
-      <div class="actions"><button class="save">שמור חודש</button></div>
-
       <div class="section-title">יעדי השקעה</div>
       <div class="note">צרו יעד לכל השקעה. בכל הפקדה חדשה דרך ״השקעות וחיסכון״ תוכלו לבחור לאיזה יעד היא שייכת, והאחוז והסכום שנותר יתעדכנו אוטומטית.</div>
       <div class="goal-form" style="margin-top:12px">
@@ -450,9 +467,9 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
 
         <div id="dcfPane" class="forecast-pane active">
           <div class="info-box" style="margin-bottom:14px"><strong>מה זה DCF?</strong><br>DCF הוא חישוב שמתרגם כסף עתידי לערך שלו היום. במערכת הזו הוא לוקח את התזרים החופשי שאתם צפויים לייצר בשנים הבאות ומפחית ממנו את השפעת הזמן לפי שיעור ההיוון. ככל ששיעור ההיוון גבוה יותר, הערך הנוכחי של הכסף העתידי נמוך יותר.</div>
-          <div class="forecast-base">
+          <div class="actions" style="margin-top:10px"><button id="toggleForecastBase" class="secondary" type="button">הצג נתוני בסיס</button></div>
+          <div id="forecastBase" class="forecast-base">
             <div class="forecast-mini"><span>נטו חודשי נוכחי</span><strong id="forecastBaseNet">₪0</strong></div>
-            <div class="forecast-mini"><span>הוצאות מחיה ופנאי</span><strong id="forecastBaseSpend">₪0</strong></div>
             <div class="forecast-mini"><span>תזרים חופשי נוכחי</span><strong id="forecastBaseFree">₪0</strong></div>
           </div>
           <div class="formgrid">
@@ -591,10 +608,12 @@ const budgetKey=storageKey+'_budgets';
 const goalsKey=storageKey+'_investment_goals';
 const recurringKey=storageKey+'_recurring_expenses';
 const financialGoalsKey=storageKey+'_financial_goals';
+const assetSnapshotsKey=storageKey+'_asset_snapshots';
 let budgets=JSON.parse(localStorage.getItem(budgetKey)||'{}');
 let investmentGoals=JSON.parse(localStorage.getItem(goalsKey)||'[]');
 let recurringExpenses=JSON.parse(localStorage.getItem(recurringKey)||'[]');
 let financialGoals=JSON.parse(localStorage.getItem(financialGoalsKey)||'[]');
+let assetSnapshots=JSON.parse(localStorage.getItem(assetSnapshotsKey)||'{}');
 recurringExpenses.forEach(x=>{if(!x.currency)x.currency='ILS';if(x.amount===undefined)x.amount=num(x.amountILS)});
 investmentGoals.forEach(g=>{if(!g.currency)g.currency='ILS';if(g.target===undefined)g.target=num(g.targetILS);if(g.starting===undefined)g.starting=num(g.startingILS)});
 financialGoals.forEach(g=>{if(!g.currency)g.currency='ILS';if(g.target===undefined)g.target=num(g.targetILS);if(g.current===undefined)g.current=num(g.currentILS)});
@@ -611,18 +630,6 @@ const deductionFields=[
 const employerFields=[
  ['employerPension','פנסיה מעסיק'],['employerStudy','קרן השתלמות מעסיק'],['employerOther','הטבות / הפרשות מעסיק אחרות']
 ];
-const assetDefs=[['cash','מזומן ובנק'],['otherAssets','נכסים אחרים'],['debt','הלוואות / התחייבויות']];
-
-function makeFields(el,defs){
- el.innerHTML='';
- defs.forEach(([k,l])=>{
-   const d=document.createElement('div'); d.className='field';
-   d.innerHTML=`<label>${l} (₪)</label><input type="number" min="0" step="0.01" data-key="${k}">`;
-   el.appendChild(d);
- });
-}
-makeFields(document.getElementById('assetFields'),assetDefs);
-
 function newIncomeSource(name='',amount=0,currency='ILS'){
  return {id:String(Date.now())+Math.random().toString(16).slice(2),name,currency,amount,
    tax:0,ni:0,health:0,pensionEmployee:0,studyEmployee:0,otherDed:0,
@@ -661,6 +668,13 @@ function ensureMonthData(m=current){
  return d;
 }
 Object.keys(db).forEach(m=>ensureMonthData(m));
+Object.keys(assetSnapshots).forEach(m=>{
+ const x=assetSnapshots[m]||{};assetSnapshots[m]={cash:Math.max(0,num(x.cash)),otherAssets:Math.max(0,num(x.otherAssets)),debt:Math.max(0,num(x.debt))};
+});
+if(!Object.keys(assetSnapshots).length){
+ const legacyMonth=Object.keys(db).sort().reverse().find(m=>{const d=ensureMonthData(m);return num(d.cash)>0||num(d.otherAssets)>0||num(d.debt)>0});
+ if(legacyMonth){const d=ensureMonthData(legacyMonth);assetSnapshots[legacyMonth]={cash:num(d.cash),otherAssets:num(d.otherAssets),debt:num(d.debt)};localStorage.setItem(assetSnapshotsKey,JSON.stringify(assetSnapshots));}
+}
 
 function sourceFieldILS(x,key){return toILS(num(x[key]),x.currency||'ILS')}
 function sourceGrossILS(x){return sourceFieldILS(x,'amount')}
@@ -788,19 +802,43 @@ function txTotal(category,m=current){
   const d=db[m]||defaults();
   return (d.transactions||[]).filter(t=>t.category===category).reduce((s,t)=>s+toILS(t.amount,t.currency),0);
 }
+function flowForMonth(m){
+ if(!db[m])return {gross:0,deductions:0,net:0,home:0,fun:0,invest:0,emp:0,free:0};
+ ensureMonthData(m);
+ const gross=incomeTotal(m),deductions=incomeDeductionsTotal(m),net=gross-deductions;
+ const home=txTotal('home',m),fun=txTotal('fun',m),invest=txTotal('invest',m),emp=incomeEmployerTotal(m);
+ return {gross,deductions,net,home,fun,invest,emp,free:net-home-fun-invest};
+}
+function assetState(m=current){
+ const d=db[m]?ensureMonthData(m):defaults();
+ const anchors=Object.keys(assetSnapshots).filter(x=>x<=m).sort();
+ if(!anchors.length)return {cash:num(d.cash),otherAssets:num(d.otherAssets),debt:num(d.debt),sourceMonth:'',automatic:false};
+ const sourceMonth=anchors[anchors.length-1],base=assetSnapshots[sourceMonth];
+ let cash=num(base.cash);
+ Object.keys(db).filter(x=>x>sourceMonth&&x<=m).sort().forEach(x=>{cash+=flowForMonth(x).free});
+ return {cash:Math.max(0,cash),otherAssets:num(base.otherAssets),debt:num(base.debt),sourceMonth,automatic:sourceMonth!==m};
+}
 function calc(m){
- if(!db[m])return {gross:0,deductions:0,net:0,home:0,fun:0,invest:0,emp:0,free:0,assets:0,nw:0,investmentValue:0};
- const d=ensureMonthData(m);
- const gross=incomeTotal(m);
- const deductions=incomeDeductionsTotal(m);
- const net=gross-deductions;
- const home=txTotal('home',m), fun=txTotal('fun',m), invest=txTotal('invest',m);
- const emp=incomeEmployerTotal(m);
- const free=net-home-fun-invest;
- const investmentValue=portfolioCurrent(m);
- const assets=num(d.cash)+investmentValue+num(d.otherAssets);
- const nw=assets-num(d.debt);
- return {gross,deductions,net,home,fun,invest,emp,free,assets,nw,investmentValue};
+ if(!db[m])return {gross:0,deductions:0,net:0,home:0,fun:0,invest:0,emp:0,free:0,assets:0,nw:0,investmentValue:0,cash:0,otherAssets:0,debt:0};
+ const f=flowForMonth(m),a=assetState(m),investmentValue=portfolioCurrent(m);
+ const assets=a.cash+investmentValue+a.otherAssets,nw=assets-a.debt;
+ return {...f,assets,nw,investmentValue,cash:a.cash,otherAssets:a.otherAssets,debt:a.debt};
+}
+function renderAssetState(){
+ const a=assetState(current);setMoney('assetCashAuto',a.cash);setMoney('assetOtherAuto',a.otherAssets);setMoney('assetDebtAuto',a.debt);
+ const status=document.getElementById('assetAutoStatus');
+ if(assetSnapshots[current])status.textContent='מצב ידני שמור ל־'+monthLabel(current);
+ else if(a.sourceMonth)status.textContent='מתעדכן אוטומטית מ־'+monthLabel(a.sourceMonth);
+ else status.textContent='יש להגדיר מצב פתיחה פעם אחת';
+}
+function openAssetEditor(){
+ const a=assetState(current);document.getElementById('assetEditCash').value=Math.round(a.cash*100)/100;document.getElementById('assetEditOther').value=Math.round(a.otherAssets*100)/100;document.getElementById('assetEditDebt').value=Math.round(a.debt*100)/100;document.getElementById('assetEditPanel').classList.add('open');
+}
+function saveAssetState(){
+ const cash=Math.max(0,num(document.getElementById('assetEditCash').value)),otherAssets=Math.max(0,num(document.getElementById('assetEditOther').value)),debt=Math.max(0,num(document.getElementById('assetEditDebt').value));
+ assetSnapshots[current]={cash,otherAssets,debt};
+ const d=ensureMonthData(current);d.cash=cash;d.otherAssets=otherAssets;d.debt=debt;
+ document.getElementById('assetEditPanel').classList.remove('open');persist();render();
 }
 function persist(){
  localStorage.setItem(storageKey,JSON.stringify(db));
@@ -808,20 +846,14 @@ function persist(){
  localStorage.setItem(goalsKey,JSON.stringify(investmentGoals));
  localStorage.setItem(recurringKey,JSON.stringify(recurringExpenses));
  localStorage.setItem(financialGoalsKey,JSON.stringify(financialGoals));
+ localStorage.setItem(assetSnapshotsKey,JSON.stringify(assetSnapshots));
  localStorage.setItem(storageKey+'_settings',JSON.stringify({
    displayCurrency:document.getElementById('displayCurrency').value,
    fxRate:fx()
  }));
 }
-function saveInputs(){
- document.querySelectorAll('[data-key]').forEach(i=>db[current][i.dataset.key]=num(i.value));
- persist(); render();
-}
-function load(){
- const d=ensureMonthData(current);
- document.querySelectorAll('[data-key]').forEach(i=>i.value=num(d[i.dataset.key]));
- render();
-}
+function saveInputs(){persist();render()}
+function load(){ensureMonthData(current);render()}
 function renderMonths(){
  const sel=document.getElementById('monthSelect'); sel.innerHTML='';
  Object.keys(db).sort().reverse().forEach(m=>{
@@ -985,28 +1017,25 @@ function deleteGoal(id){
 }
 
 
+async function fetchJsonWithTimeout(url,ms=6000){
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),ms);
+ try{const resp=await fetch(url,{cache:'no-store',signal:controller.signal,headers:{'Accept':'application/json'}});if(!resp.ok)throw new Error('http '+resp.status);return await resp.json()}finally{clearTimeout(timer)}
+}
 async function updateCurrentFx(){
  const btn=document.getElementById('updateFx'),status=document.getElementById('fxStatus');
  btn.disabled=true;status.textContent='מעדכן…';
  try{
-   let rate=0,date='';
-   try{
-     const resp=await fetch('https://www.boi.org.il/PublicApi/GetExchangeRate?key=USD',{cache:'no-store'});
-     if(resp.ok){
-       const data=await resp.json();
-       rate=num(data?.currentExchangeRate ?? data?.CurrentExchangeRate ?? data?.rate);
-       date=data?.lastUpdate || data?.LastUpdate || '';
-     }
-   }catch(e){}
-   if(rate<=0){
-     const resp=await fetch('https://api.frankfurter.app/latest?from=USD&to=ILS',{cache:'no-store'});
-     if(!resp.ok)throw new Error('network');
-     const data=await resp.json();rate=num(data?.rates?.ILS);date=data?.date||'';
-   }
+   let rate=0,date='',source='';
+   const providers=[
+     async()=>{const d=await fetchJsonWithTimeout('https://api.frankfurter.dev/v2/rate/usd/ils');return {rate:num(d?.rate),date:d?.date||'',source:'Frankfurter'}},
+     async()=>{const d=await fetchJsonWithTimeout('https://open.er-api.com/v6/latest/USD');return {rate:num(d?.rates?.ILS),date:d?.time_last_update_utc||'',source:'ExchangeRate-API'}},
+     async()=>{const d=await fetchJsonWithTimeout('https://api.exchangerate-api.com/v4/latest/USD');return {rate:num(d?.rates?.ILS),date:d?.date||'',source:'ExchangeRate API'}}
+   ];
+   for(const provider of providers){try{const r=await provider();if(r.rate>0){rate=r.rate;date=r.date;source=r.source;break}}catch(e){}}
    if(rate<=0)throw new Error('rate');
    document.getElementById('fxRate').value=rate.toFixed(4);persist();render();
-   status.textContent=`עודכן: $1 = ₪${rate.toFixed(4)}${date?' · '+String(date).slice(0,10):''}`;
- }catch(e){status.textContent='לא הצלחתי לעדכן אוטומטית';alert('לא הצלחתי לקבל שער דולר נוכחי. אפשר להשאיר או לעדכן את השער ידנית.');}
+   const shortDate=date?String(date).slice(0,16):'';status.textContent=`עודכן: $1 = ₪${rate.toFixed(4)}${shortDate?' · '+shortDate:''}`;
+ }catch(e){status.textContent='עדכון אוטומטי נכשל — השער הידני נשמר';alert('לא הצלחתי לקבל שער דולר אוטומטי כרגע. השער הידני נשאר ללא שינוי.');}
  finally{btn.disabled=false}
 }
 
@@ -1065,7 +1094,7 @@ function render(){
  setMoney('homeTotal',c.home); setMoney('funTotal',c.fun); setMoney('investTotal',c.invest);
  document.getElementById('saveRate').textContent=pct(c.net?((c.invest+Math.max(c.free,0))/c.net):0);
  document.getElementById('fixedRate').textContent=pct(c.net?c.home/c.net:0);
- document.getElementById('runway').textContent=c.home?(num(d.cash)/c.home).toFixed(1):'0';
+ document.getElementById('runway').textContent=c.home?(c.cash/c.home).toFixed(1):'0';
 
  const prev=calc(previousMonth(current,1));
  document.getElementById('mom').textContent=prev.free?pct((c.free-prev.free)/Math.abs(prev.free)):'—';
@@ -1086,11 +1115,11 @@ function render(){
    wrap.append(bars,lab);chart.appendChild(wrap);
  });
 
- setMoney('assetsTotal',c.assets);setMoney('debtTotal',d.debt);
+ setMoney('assetsTotal',c.assets);setMoney('debtTotal',c.debt);
  setMoney('sGross',c.gross);setMoney('sTax',c.deductions);setMoney('sNet',c.net);setMoney('sSpend',c.home+c.fun);setMoney('sSurplus',c.free+c.invest);
- setMoney('bCash',d.cash);setMoney('bInv',c.investmentValue);setMoney('bOther',d.otherAssets);setMoney('bDebt',d.debt);
+ setMoney('bCash',c.cash);setMoney('bInv',c.investmentValue);setMoney('bOther',c.otherAssets);setMoney('bDebt',c.debt);
  setMoney('cIn',c.net);setMoney('cHome',c.home);setMoney('cFun',c.fun);setMoney('cInv',c.invest);setMoney('cFree',c.free);
- renderRecent(); renderTopExpenses(); renderBudgetEditors(); renderGoals(); renderIncomeSources(); renderInvestments(); renderRecurring(); renderFinancialGoals(); renderPayslips(); forecast();
+ renderRecent(); renderTopExpenses(); renderBudgetEditors(); renderGoals(); renderIncomeSources(); renderInvestments(); renderAssetState(); renderRecurring(); renderFinancialGoals(); renderPayslips(); forecast();
 }
 function forecast(){
  const c=calc(current),d=db[current];
@@ -1106,10 +1135,10 @@ function forecast(){
    const fcf=annualNet-annualSpend-annualInv;
    pv+=fcf/Math.pow(1+disc,y);
  }
- setMoney('forecastBaseNet',c.net);setMoney('forecastBaseSpend',c.home+c.fun);setMoney('forecastBaseFree',c.free);
+ setMoney('forecastBaseNet',c.net);setMoney('forecastBaseFree',c.free);
  setMoney('dcfValue',pv);
  const em=Math.max(1,num(document.getElementById('emergencyMonths').value)||6);
- const target=c.home*em,cash=num(d.cash),gap=Math.max(0,target-cash);
+ const target=c.home*em,cash=c.cash,gap=Math.max(0,target-cash);
  setMoney('emergencyTarget',target);setMoney('emergencyCash',cash);setMoney('emergencyGap',gap);
  document.getElementById('emergencyProgress').style.width=Math.min(100,target?cash/target*100:0)+'%';
  calculateCompound();
@@ -1200,6 +1229,10 @@ document.getElementById('addMonth').addEventListener('click',()=>{
 document.getElementById('displayCurrency').addEventListener('change',()=>{persist();render()});
 document.getElementById('fxRate').addEventListener('change',()=>{persist();render()});
 document.getElementById('updateFx').addEventListener('click',updateCurrentFx);
+document.getElementById('editAssetState').addEventListener('click',openAssetEditor);
+document.getElementById('saveAssetState').addEventListener('click',saveAssetState);
+document.getElementById('cancelAssetEdit').addEventListener('click',()=>document.getElementById('assetEditPanel').classList.remove('open'));
+document.getElementById('toggleForecastBase').addEventListener('click',()=>{const box=document.getElementById('forecastBase'),btn=document.getElementById('toggleForecastBase'),open=box.classList.toggle('open');btn.textContent=open?'הסתר נתוני בסיס':'הצג נתוני בסיס'});
 document.getElementById('calcForecast').addEventListener('click',forecast);
 document.getElementById('showDcf').addEventListener('click',()=>setForecastMode('dcf'));
 document.getElementById('showCompound').addEventListener('click',()=>setForecastMode('compound'));
@@ -1224,7 +1257,7 @@ document.getElementById('customSub').addEventListener('click',()=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCategory()});
 
 document.getElementById('exportBackup').addEventListener('click',()=>{
- const payload={version:5,exportedAt:new Date().toISOString(),db,budgets,investmentGoals,recurringExpenses,financialGoals,settings:{
+ const payload={version:6,exportedAt:new Date().toISOString(),db,budgets,investmentGoals,recurringExpenses,financialGoals,assetSnapshots,settings:{
    displayCurrency:document.getElementById('displayCurrency').value,
    fxRate:fx()
  }};
@@ -1247,6 +1280,7 @@ document.getElementById('importBackup').addEventListener('change',async e=>{
    if(Array.isArray(payload.investmentGoals))investmentGoals=payload.investmentGoals;
    if(Array.isArray(payload.recurringExpenses))recurringExpenses=payload.recurringExpenses;
    if(Array.isArray(payload.financialGoals))financialGoals=payload.financialGoals;
+   if(payload.assetSnapshots&&typeof payload.assetSnapshots==='object')assetSnapshots=payload.assetSnapshots;
    recurringExpenses.forEach(x=>{if(!x.currency)x.currency='ILS';if(x.amount===undefined)x.amount=num(x.amountILS)});
    investmentGoals.forEach(g=>{if(!g.currency)g.currency='ILS';if(g.target===undefined)g.target=num(g.targetILS);if(g.starting===undefined)g.starting=num(g.startingILS)});
    financialGoals.forEach(g=>{if(!g.currency)g.currency='ILS';if(g.target===undefined)g.target=num(g.targetILS);if(g.current===undefined)g.current=num(g.currentILS)});
