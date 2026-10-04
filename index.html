@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- Finance app updated: dynamic income, investments, portfolio, recurring expenses, report/DCF help -->
+<!-- Finance app v7: per-source payroll, monthly payslips, editable goals, optional live FX, investments, recurring expenses -->
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
@@ -138,6 +138,28 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
 @media(max-width:900px){.dynamic-row,.dynamic-row.invest-row,.dynamic-row.recurring-row,.investment-item,.summary-strip,.help-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.dynamic-row,.dynamic-row.invest-row,.dynamic-row.recurring-row,.investment-item,.summary-strip,.help-grid{grid-template-columns:1fr}}
 
+
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.fx-update{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.fx-status{font-size:11px;color:var(--muted);max-width:170px}
+.source-card{border:1px solid var(--line);border-radius:18px;padding:16px;background:#fff;margin-top:12px}
+.source-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.source-title{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.source-fields{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.source-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.source-summary>div{background:#f7f4ef;border-radius:12px;padding:10px}.source-summary span{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}.source-summary strong{direction:ltr}
+.payslip-upload{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;margin-top:14px}
+.payslip-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.payslip-item{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:13px;border:1px solid var(--line);border-radius:16px;background:#fff}
+.file-meta{font-size:12px;color:var(--muted);margin-top:4px}
+.goal-create-grid{display:grid;grid-template-columns:1.2fr .8fr .8fr .8fr .55fr;gap:9px;align-items:end;margin-top:12px}
+.fin-goals{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.fin-goal{border:1px solid var(--line);border-radius:16px;padding:14px;background:#fff}
+.fin-goal-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.divider{height:1px;background:var(--line);margin:20px 0}
+@media(max-width:900px){.grid2,.source-fields,.source-summary,.payslip-upload,.goal-create-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.grid2,.source-fields,.source-summary,.payslip-upload,.goal-create-grid,.payslip-item{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -148,7 +170,7 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
       <div class="currencybox">
         <span>תצוגה</span>
         <select id="displayCurrency"><option value="ILS">₪ שקל</option><option value="USD">$ דולר</option></select>
-        <span>שער $</span><input id="fxRate" type="number" step="0.01" min="0.01" value="3.50" style="width:84px" title="כמה שקלים שווה דולר אחד">
+        <span>שער $</span><input id="fxRate" type="number" step="0.01" min="0.01" value="3.50" style="width:84px" title="כמה שקלים שווה דולר אחד"><div class="fx-update"><button id="updateFx" class="secondary" type="button">עדכן שער נוכחי</button><span id="fxStatus" class="fx-status"></span></div>
       </div>
       <div class="monthbox"><span>חודש</span><select id="monthSelect"></select><button id="addMonth">חודש חדש</button></div>
       <div class="monthbox">
@@ -161,6 +183,7 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
   <div class="tabs">
     <button class="tab active" data-view="dashboard">בית</button>
     <button class="tab" data-view="income">הכנסות ושכר</button>
+    <button class="tab" data-view="payslips">תלושי שכר</button>
     <button class="tab" data-view="expenses">הוצאות</button>
     <button class="tab" data-view="budget">תכנון החודש הבא</button>
     <button class="tab" data-view="investments">השקעות ונכסים</button>
@@ -169,11 +192,10 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
   </div>
 
   <section id="dashboard" class="view active">
-    <div class="grid4">
+    <div class="grid3">
       <div class="card kpi blue"><div class="label">ברוטו החודש</div><div><div class="value" id="kGross">₪0</div><div class="secondary-value" id="kGross2">$0</div></div></div>
       <div class="card kpi teal"><div class="label">נטו שנכנס לחשבון</div><div><div class="value" id="kNet">₪0</div><div class="secondary-value" id="kNet2">$0</div></div></div>
       <div class="card kpi gold"><div class="label">נשאר בסוף החודש</div><div><div class="value" id="kFree">₪0</div><div class="secondary-value" id="kFree2">$0</div></div></div>
-      <div class="card kpi lav"><div class="label">שווי נקי</div><div><div class="value" id="kNW">₪0</div><div class="secondary-value" id="kNW2">$0</div></div></div>
     </div>
 
     <div class="section-title">לאן הכסף הלך?</div>
@@ -217,24 +239,41 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
   <section id="income" class="view">
     <div class="card">
       <h2>הכנסות ושכר</h2>
-      <div class="note">אפשר להוסיף כמה מקורות הכנסה שרוצים, לתת לכל מקור שם משלכם ולערוך אותו בכל חודש. הסכומים מצטרפים אוטומטית להכנסה ברוטו של החודש.</div>
+      <div class="note">כל מקור הכנסה מנוהל בנפרד. לכל מקור אפשר להזין ברוטו, מסים, ניכויי עובד והפרשות מעסיק — וכך הנטו והסיכומים מחושבים אוטומטית בלי לערבב בין משכורות שונות.</div>
 
-      <div class="section-title">מקורות הכנסה</div>
+      <div class="section-title">הוסף מקור הכנסה</div>
       <div class="dynamic-row">
-        <div class="field"><label>שם מקור ההכנסה</label><input id="incomeSourceName" placeholder="לדוגמה: משכורת, פרויקט, עבודה נוספת"></div>
-        <div class="field"><label>סכום</label><input id="incomeSourceAmount" type="number" min="0" step="0.01" placeholder="0"></div>
+        <div class="field"><label>שם מקור ההכנסה</label><input id="incomeSourceName" placeholder="שם חופשי לבחירתכם"></div>
+        <div class="field"><label>ברוטו</label><input id="incomeSourceAmount" type="number" min="0" step="0.01" placeholder="0"></div>
         <div class="field"><label>מטבע</label><select id="incomeSourceCurrency"><option value="ILS">₪</option><option value="USD">$</option></select></div>
         <div class="row-actions"><button id="addIncomeSource" type="button">+ הוסף מקור</button></div>
       </div>
-      <div id="incomeSourcesList" class="dynamic-list"></div>
-      <div class="summary-strip">
-        <div class="card blue"><div class="label">סה״כ הכנסות ברוטו</div><div class="big-result" id="incomeSourcesTotal">₪0</div></div>
-      </div>
 
-      <div class="section-title">מסים, ניכויים והפרשות</div>
-      <div class="note">הזינו כאן את הסכומים הרלוונטיים מתלושי השכר. המערכת מפחיתה את ניכויי העובד מסך ההכנסות ומציגה את הנטו.</div>
-      <div class="formgrid" id="incomeFields"></div>
-      <div class="actions"><button class="save">שמור חודש</button></div>
+      <div class="section-title">מקורות ההכנסה בחודש</div>
+      <div id="incomeSourcesList" class="dynamic-list"></div>
+      <div class="summary-strip" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+        <div class="card blue"><div class="label">סה״כ ברוטו</div><div class="big-result" id="incomeSourcesTotal">₪0</div></div>
+        <div class="card rose"><div class="label">מסים וניכויי עובד</div><div class="big-result" id="incomeDeductionsTotal">₪0</div></div>
+        <div class="card teal"><div class="label">נטו שנכנס</div><div class="big-result" id="incomeNetTotal">₪0</div></div>
+        <div class="card sage"><div class="label">הפרשות מעסיק</div><div class="big-result" id="incomeEmployerTotal">₪0</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="payslips" class="view">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div><h2 style="margin-bottom:5px">תלושי שכר</h2><div class="note">התלושים כאן מקובצים לפי החודש שמוצג למעלה. אפשר לשייך כל תלוש למקור הכנסה מסוים.</div></div>
+        <span class="badge" id="payslipMonthLabel">—</span>
+      </div>
+      <div class="info-box" style="margin-top:14px"><strong>שמירת קבצים</strong><br>התלושים נשמרים באופן מקומי בדפדפן של המכשיר הזה (IndexedDB). הם לא נשלחים לשרת ולא מסתנכרנים אוטומטית למכשיר אחר, והם אינם נכללים בקובץ הגיבוי של הנתונים הכספיים.</div>
+      <div class="payslip-upload">
+        <div class="field"><label>שיוך למקור הכנסה</label><select id="payslipSource"><option value="">ללא שיוך</option></select></div>
+        <div class="field"><label>בחרו תלוש/ים</label><input id="payslipFiles" type="file" accept="application/pdf,image/*" multiple></div>
+        <button id="addPayslips" type="button">העלה לחודש</button>
+      </div>
+      <div id="payslipStatus" class="note" style="margin-top:10px"></div>
+      <div id="payslipList" class="payslip-list"></div>
     </div>
   </section>
 
@@ -331,11 +370,10 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
         <div id="portfolioPieLegend" class="pie-legend"></div>
       </div>
 
-      <div class="section-title">מצב הון</div>
-      <div class="grid3">
+      <div class="section-title">מצב נכסים והתחייבויות</div>
+      <div class="grid2">
         <div class="card blue"><div class="label">סה״כ נכסים</div><div class="big-result" id="assetsTotal">₪0</div></div>
         <div class="card rose"><div class="label">סה״כ התחייבויות</div><div class="big-result" id="debtTotal">₪0</div></div>
-        <div class="card teal"><div class="label">שווי נקי</div><div class="big-result" id="netWorth2">₪0</div></div>
       </div>
       <div class="actions"><button class="save">שמור חודש</button></div>
 
@@ -355,7 +393,7 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
   <section id="statements" class="view">
     <div class="help-grid">
       <div class="help-card"><strong>דוח הכנסות</strong><div class="note">מראה מה נכנס ומה ירד במהלך החודש: הכנסות, ניכויים, הוצאות והעודף שנוצר.</div></div>
-      <div class="help-card"><strong>מאזן</strong><div class="note">תמונת מצב של מה שיש לכם בנקודת זמן: מזומן, השקעות ונכסים, פחות התחייבויות. התוצאה היא השווי הנקי.</div></div>
+      <div class="help-card"><strong>מאזן</strong><div class="note">תמונת מצב של מה שיש לכם בנקודת זמן: מזומן, השקעות ונכסים, מול ההתחייבויות הקיימות.</div></div>
       <div class="help-card"><strong>תזרים מזומנים</strong><div class="note">מראה איך הכסף זז בפועל: כמה נכנס, כמה יצא למחיה ולפנאי, כמה הועבר להשקעות וכמה נשאר חופשי.</div></div>
     </div>
     <div class="grid3">
@@ -373,7 +411,6 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
         <div class="row"><span>השקעות</span><strong id="bInv">₪0</strong></div>
         <div class="row"><span>נכסים אחרים</span><strong id="bOther">₪0</strong></div>
         <div class="row"><span>התחייבויות</span><strong id="bDebt">₪0</strong></div>
-        <div class="row"><span>שווי נקי</span><strong id="bNW">₪0</strong></div>
       </div>
       <div class="card">
         <h3>תזרים מזומנים</h3>
@@ -404,8 +441,20 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line
         <div class="note">DCF מותאם למשק בית: היוון העודף/החיסכון העתידי הצפוי, ולא הערכת שווי של חברה.</div>
       </div>
       <div class="card">
-        <h2>מטרות</h2>
-        <div class="field"><label>יעד קרן חירום — חודשים</label><input id="emergencyMonths" type="number" value="6"></div>
+        <h2>מטרות פיננסיות</h2>
+        <div class="note">אפשר להוסיף מטרות משלכם, לעדכן כמה כבר נצבר, לקבוע יעד כספי ותאריך יעד. ההתקדמות מחושבת אוטומטית.</div>
+        <div class="goal-create-grid">
+          <div class="field"><label>שם המטרה</label><input id="financialGoalName" placeholder="לדוגמה: חופשה, רכב, הון עצמי"></div>
+          <div class="field"><label>סכום יעד</label><input id="financialGoalTarget" type="number" min="0" step="0.01" placeholder="0"></div>
+          <div class="field"><label>כמה כבר יש</label><input id="financialGoalCurrent" type="number" min="0" step="0.01" placeholder="0"></div>
+          <div class="field"><label>תאריך יעד</label><input id="financialGoalDate" type="date"></div>
+          <div class="field"><label>מטבע</label><select id="financialGoalCurrency"><option value="ILS">₪</option><option value="USD">$</option></select></div>
+        </div>
+        <div class="actions"><button id="addFinancialGoal" type="button">+ הוסף מטרה</button></div>
+        <div id="financialGoalsList" class="fin-goals"></div>
+        <div class="divider"></div>
+        <h3>קרן חירום</h3>
+        <div class="field"><label>יעד קרן חירום — חודשים</label><input id="emergencyMonths" type="number" min="1" value="6"></div>
         <div class="row"><span>יעד קרן חירום</span><strong id="emergencyTarget">₪0</strong></div>
         <div class="row"><span>מזומן נוכחי</span><strong id="emergencyCash">₪0</strong></div>
         <div class="row"><span>פער</span><strong id="emergencyGap">₪0</strong></div>
@@ -495,9 +544,14 @@ let db=raw?JSON.parse(raw):{};
 const budgetKey=storageKey+'_budgets';
 const goalsKey=storageKey+'_investment_goals';
 const recurringKey=storageKey+'_recurring_expenses';
+const financialGoalsKey=storageKey+'_financial_goals';
 let budgets=JSON.parse(localStorage.getItem(budgetKey)||'{}');
 let investmentGoals=JSON.parse(localStorage.getItem(goalsKey)||'[]');
 let recurringExpenses=JSON.parse(localStorage.getItem(recurringKey)||'[]');
+let financialGoals=JSON.parse(localStorage.getItem(financialGoalsKey)||'[]');
+recurringExpenses.forEach(x=>{if(!x.currency)x.currency='ILS';if(x.amount===undefined)x.amount=num(x.amountILS)});
+investmentGoals.forEach(g=>{if(!g.currency)g.currency='ILS';if(g.target===undefined)g.target=num(g.targetILS);if(g.starting===undefined)g.starting=num(g.startingILS)});
+financialGoals.forEach(g=>{if(!g.currency)g.currency='ILS';if(g.target===undefined)g.target=num(g.targetILS);if(g.current===undefined)g.current=num(g.currentILS)});
 let current=ym(today);
 if(!db[current]) db[current]=defaults();
 
@@ -505,9 +559,10 @@ const settings=JSON.parse(localStorage.getItem(storageKey+'_settings')||'{"displ
 document.getElementById('displayCurrency').value=settings.displayCurrency||'ILS';
 document.getElementById('fxRate').value=settings.fxRate||3.5;
 
-const incomeDefs=[
- ['tax','מס הכנסה'],['ni','ביטוח לאומי'],['health','מס בריאות'],
- ['pensionEmployee','פנסיה עובד'],['studyEmployee','קרן השתלמות עובד'],['otherDed','ניכויים אחרים'],
+const deductionFields=[
+ ['tax','מס הכנסה'],['ni','ביטוח לאומי'],['health','מס בריאות'],['pensionEmployee','פנסיה עובד'],['studyEmployee','קרן השתלמות עובד'],['otherDed','ניכויים אחרים']
+];
+const employerFields=[
  ['employerPension','פנסיה מעסיק'],['employerStudy','קרן השתלמות מעסיק'],['employerOther','הטבות / הפרשות מעסיק אחרות']
 ];
 const assetDefs=[['cash','מזומן ובנק'],['otherAssets','נכסים אחרים'],['debt','הלוואות / התחייבויות']];
@@ -520,63 +575,112 @@ function makeFields(el,defs){
    el.appendChild(d);
  });
 }
-makeFields(document.getElementById('incomeFields'),incomeDefs);
 makeFields(document.getElementById('assetFields'),assetDefs);
 
+function newIncomeSource(name='',amount=0,currency='ILS'){
+ return {id:String(Date.now())+Math.random().toString(16).slice(2),name,currency,amount,
+   tax:0,ni:0,health:0,pensionEmployee:0,studyEmployee:0,otherDed:0,
+   employerPension:0,employerStudy:0,employerOther:0};
+}
+function normalizeIncomeSource(x){
+ if(!x.currency)x.currency='ILS';
+ if(x.amount===undefined)x.amount=num(x.amountILS);
+ [...deductionFields,...employerFields].forEach(([k])=>{if(x[k]===undefined)x[k]=0});
+ return x;
+}
 function ensureMonthData(m=current){
  const d=db[m]||(db[m]=defaults());
  d.transactions=d.transactions||[];
  if(!Array.isArray(d.incomeSources))d.incomeSources=[];
  if(!d.incomeSources.length&&(num(d.gross1)>0||num(d.gross2)>0)){
-   if(num(d.gross1)>0)d.incomeSources.push({id:'legacy1-'+m,name:'אדם 1',amountILS:num(d.gross1)});
-   if(num(d.gross2)>0)d.incomeSources.push({id:'legacy2-'+m,name:'אדם 2',amountILS:num(d.gross2)});
+   if(num(d.gross1)>0)d.incomeSources.push(newIncomeSource('אדם 1',num(d.gross1),'ILS'));
+   if(num(d.gross2)>0)d.incomeSources.push(newIncomeSource('אדם 2',num(d.gross2),'ILS'));
    d.gross1=0;d.gross2=0;
  }
+ d.incomeSources.forEach(normalizeIncomeSource);
+ if(!d.payrollPerSourceMigrated){
+   const legacy={tax:num(d.tax),ni:num(d.ni),health:num(d.health),pensionEmployee:num(d.pensionEmployee),studyEmployee:num(d.studyEmployee),otherDed:num(d.otherDed),employerPension:num(d.employerPension),employerStudy:num(d.employerStudy),employerOther:num(d.employerOther)};
+   const hasLegacy=Object.values(legacy).some(v=>v>0);
+   if(hasLegacy){
+     let target=d.incomeSources.length===1?d.incomeSources[0]:null;
+     if(!target){target=newIncomeSource('ניכויים והפרשות קודמים',0,'ILS');d.incomeSources.push(target)}
+     Object.entries(legacy).forEach(([k,v])=>target[k]=num(target[k])+v);
+   }
+   ['tax','ni','health','pensionEmployee','studyEmployee','otherDed','employerPension','employerStudy','employerOther'].forEach(k=>d[k]=0);
+   d.payrollPerSourceMigrated=true;
+ }
  if(!Array.isArray(d.investmentPositions))d.investmentPositions=[];
- if(!d.investmentPositions.length&&num(d.investments)>0){d.investmentPositions.push({id:'legacy-invest-'+m,name:'תיק השקעות',costILS:num(d.investments),currentILS:num(d.investments)});d.investments=0;}
+ if(!d.investmentPositions.length&&num(d.investments)>0){d.investmentPositions.push({id:'legacy-invest-'+m,name:'תיק השקעות',currency:'ILS',cost:num(d.investments),current:num(d.investments)});d.investments=0;}
+ d.investmentPositions.forEach(x=>{if(!x.currency)x.currency='ILS';if(x.cost===undefined)x.cost=num(x.costILS);if(x.current===undefined)x.current=num(x.currentILS)});
  return d;
 }
 Object.keys(db).forEach(m=>ensureMonthData(m));
 
-function incomeTotal(m=current){return ensureMonthData(m).incomeSources.reduce((sum,x)=>sum+num(x.amountILS),0)}
-function portfolioCurrent(m=current){return ensureMonthData(m).investmentPositions.reduce((sum,x)=>sum+num(x.currentILS),0)}
-function portfolioCost(m=current){return ensureMonthData(m).investmentPositions.reduce((sum,x)=>sum+num(x.costILS),0)}
+function sourceFieldILS(x,key){return toILS(num(x[key]),x.currency||'ILS')}
+function sourceGrossILS(x){return sourceFieldILS(x,'amount')}
+function sourceDeductionsILS(x){return deductionFields.reduce((s,[k])=>s+sourceFieldILS(x,k),0)}
+function sourceEmployerILS(x){return employerFields.reduce((s,[k])=>s+sourceFieldILS(x,k),0)}
+function incomeTotal(m=current){return ensureMonthData(m).incomeSources.reduce((sum,x)=>sum+sourceGrossILS(x),0)}
+function incomeDeductionsTotal(m=current){return ensureMonthData(m).incomeSources.reduce((sum,x)=>sum+sourceDeductionsILS(x),0)}
+function incomeEmployerTotal(m=current){return ensureMonthData(m).incomeSources.reduce((sum,x)=>sum+sourceEmployerILS(x),0)}
+function investmentCurrentILS(x){return toILS(num(x.current),x.currency||'ILS')}
+function investmentCostILS(x){return toILS(num(x.cost),x.currency||'ILS')}
+function portfolioCurrent(m=current){return ensureMonthData(m).investmentPositions.reduce((sum,x)=>sum+investmentCurrentILS(x),0)}
+function portfolioCost(m=current){return ensureMonthData(m).investmentPositions.reduce((sum,x)=>sum+investmentCostILS(x),0)}
 
 function addIncomeSource(){
  const name=document.getElementById('incomeSourceName').value.trim();
  const amount=num(document.getElementById('incomeSourceAmount').value),cur=document.getElementById('incomeSourceCurrency').value;
- if(!name){alert('כתבו שם למקור ההכנסה');return} if(amount<=0){alert('הזינו סכום גדול מ־0');return}
- ensureMonthData().incomeSources.push({id:String(Date.now())+Math.random().toString(16).slice(2),name,amountILS:toILS(amount,cur)});
+ if(!name){alert('כתבו שם למקור ההכנסה');return} if(amount<0){alert('הסכום לא יכול להיות שלילי');return}
+ ensureMonthData().incomeSources.push(newIncomeSource(name,amount,cur));
  document.getElementById('incomeSourceName').value='';document.getElementById('incomeSourceAmount').value='';persist();render();
 }
-function editIncomeSource(id){
+function saveIncomeSource(id){
+ const card=document.querySelector(`.source-card[data-id="${CSS.escape(String(id))}"]`);if(!card)return;
  const x=ensureMonthData().incomeSources.find(x=>String(x.id)===String(id));if(!x)return;
- const name=prompt('שם מקור ההכנסה',x.name);if(name===null)return;
- const amount=prompt('סכום בשקלים',String(Math.round(x.amountILS)));if(amount===null)return;
- if(!name.trim()||num(amount)<0)return;x.name=name.trim();x.amountILS=num(amount);persist();render();
+ const name=card.querySelector('[data-source-field="name"]').value.trim();if(!name){alert('שם מקור ההכנסה לא יכול להיות ריק');return}
+ x.name=name;x.currency=card.querySelector('[data-source-field="currency"]').value;
+ ['amount',...deductionFields.map(x=>x[0]),...employerFields.map(x=>x[0])].forEach(k=>x[k]=Math.max(0,num(card.querySelector(`[data-source-field="${k}"]`).value)));
+ persist();render();
 }
-function deleteIncomeSource(id){ensureMonthData().incomeSources=ensureMonthData().incomeSources.filter(x=>String(x.id)!==String(id));persist();render()}
+function deleteIncomeSource(id){
+ const x=ensureMonthData().incomeSources.find(x=>String(x.id)===String(id));if(!x)return;
+ if(!confirm(`למחוק את מקור ההכנסה "${x.name}"?`))return;
+ ensureMonthData().incomeSources=ensureMonthData().incomeSources.filter(x=>String(x.id)!==String(id));persist();render();
+}
 function renderIncomeSources(){
  const box=document.getElementById('incomeSourcesList'),items=ensureMonthData().incomeSources;
- setMoney('incomeSourcesTotal',incomeTotal());
+ const gross=incomeTotal(),ded=incomeDeductionsTotal(),emp=incomeEmployerTotal();
+ setMoney('incomeSourcesTotal',gross);setMoney('incomeDeductionsTotal',ded);setMoney('incomeNetTotal',gross-ded);setMoney('incomeEmployerTotal',emp);
+ renderPayslipSourceOptions();
  if(!items.length){box.innerHTML='<div class="empty">עדיין אין מקורות הכנסה בחודש הזה. הוסיפו מקור ראשון למעלה.</div>';return}
- box.innerHTML=items.map(x=>`<div class="tx-item"><div class="tx-main"><div class="tx-title">${escapeHtml(x.name)}</div><div class="tx-meta">מקור הכנסה</div></div><div style="display:flex;align-items:center;gap:8px"><strong dir="ltr">${money(x.amountILS)}</strong><button class="secondary edit-income" data-id="${x.id}" type="button">עריכה</button><button class="tx-del delete-income" data-id="${x.id}" type="button">מחיקה</button></div></div>`).join('');
- box.querySelectorAll('.edit-income').forEach(b=>b.addEventListener('click',()=>editIncomeSource(b.dataset.id)));
+ box.innerHTML=items.map(x=>{
+   const symbol=x.currency==='USD'?'$':'₪',grossILS=sourceGrossILS(x),dedILS=sourceDeductionsILS(x),empILS=sourceEmployerILS(x),netILS=grossILS-dedILS;
+   const deductionHtml=deductionFields.map(([k,l])=>`<div class="field"><label>${l} (${symbol})</label><input type="number" min="0" step="0.01" data-source-field="${k}" value="${num(x[k])||''}" placeholder="0"></div>`).join('');
+   const employerHtml=employerFields.map(([k,l])=>`<div class="field"><label>${l} (${symbol})</label><input type="number" min="0" step="0.01" data-source-field="${k}" value="${num(x[k])||''}" placeholder="0"></div>`).join('');
+   return `<div class="source-card" data-id="${escapeHtml(x.id)}"><div class="source-head"><div class="source-title"><strong>${escapeHtml(x.name)}</strong><span class="badge">${x.currency}</span></div><div class="row-actions"><button class="secondary save-income" data-id="${escapeHtml(x.id)}" type="button">שמור מקור</button><button class="tx-del delete-income" data-id="${escapeHtml(x.id)}" type="button">מחיקה</button></div></div>
+   <div class="source-fields"><div class="field"><label>שם מקור</label><input data-source-field="name" value="${escapeHtml(x.name)}"></div><div class="field"><label>מטבע</label><select data-source-field="currency"><option value="ILS" ${x.currency==='ILS'?'selected':''}>₪ שקל</option><option value="USD" ${x.currency==='USD'?'selected':''}>$ דולר</option></select></div><div class="field"><label>ברוטו (${symbol})</label><input type="number" min="0" step="0.01" data-source-field="amount" value="${num(x.amount)||''}" placeholder="0"></div></div>
+   <div class="section-title" style="font-size:15px;margin:16px 0 8px">מסים וניכויי עובד</div><div class="source-fields">${deductionHtml}</div>
+   <div class="section-title" style="font-size:15px;margin:16px 0 8px">הפרשות מעסיק</div><div class="source-fields">${employerHtml}</div>
+   <div class="source-summary"><div><span>ברוטו</span><strong>${money(grossILS)}</strong></div><div><span>נטו שנכנס</span><strong>${money(netILS)}</strong></div><div><span>הפרשות מעסיק</span><strong>${money(empILS)}</strong></div></div></div>`;
+ }).join('');
+ box.querySelectorAll('.save-income').forEach(b=>b.addEventListener('click',()=>saveIncomeSource(b.dataset.id)));
  box.querySelectorAll('.delete-income').forEach(b=>b.addEventListener('click',()=>deleteIncomeSource(b.dataset.id)));
 }
 
 function addInvestment(){
  const name=document.getElementById('investmentName').value.trim(),cost=num(document.getElementById('investmentCost').value),value=num(document.getElementById('investmentCurrent').value),cur=document.getElementById('investmentCurrency').value;
  if(!name){alert('כתבו שם להשקעה');return}if(cost<0||value<0){alert('הסכומים לא יכולים להיות שליליים');return}
- ensureMonthData().investmentPositions.push({id:String(Date.now())+Math.random().toString(16).slice(2),name,costILS:toILS(cost,cur),currentILS:toILS(value,cur)});
+ ensureMonthData().investmentPositions.push({id:String(Date.now())+Math.random().toString(16).slice(2),name,currency:cur,cost,current:value});
  document.getElementById('investmentName').value='';document.getElementById('investmentCost').value='';document.getElementById('investmentCurrent').value='';persist();render();
 }
 function editInvestment(id){
  const x=ensureMonthData().investmentPositions.find(x=>String(x.id)===String(id));if(!x)return;
  const name=prompt('שם ההשקעה',x.name);if(name===null)return;
- const cost=prompt('כמה הושקע — בשקלים',String(Math.round(x.costILS)));if(cost===null)return;
- const value=prompt('שווי נוכחי — בשקלים',String(Math.round(x.currentILS)));if(value===null)return;
- if(!name.trim()||num(cost)<0||num(value)<0)return;x.name=name.trim();x.costILS=num(cost);x.currentILS=num(value);persist();render();
+ const currency=prompt('מטבע: ILS או USD',x.currency||'ILS');if(currency===null)return;const cur=String(currency).trim().toUpperCase();if(!['ILS','USD'].includes(cur)){alert('המטבע צריך להיות ILS או USD');return}
+ const cost=prompt(`כמה הושקע — ב${cur}`,String(num(x.cost)));if(cost===null)return;
+ const value=prompt(`שווי נוכחי — ב${cur}`,String(num(x.current)));if(value===null)return;
+ if(!name.trim()||num(cost)<0||num(value)<0)return;x.name=name.trim();x.currency=cur;x.cost=num(cost);x.current=num(value);persist();render();
 }
 function deleteInvestment(id){
  const x=ensureMonthData().investmentPositions.find(x=>String(x.id)===String(id));if(!x)return;
@@ -589,35 +693,38 @@ function renderInvestments(){
  setMoney('portfolioValue',totalValue);setMoney('portfolioCost',totalCost);setMoney('portfolioGain',gain);
  const pctEl=document.getElementById('portfolioGainPct');pctEl.textContent=(gain>=0?'+':'')+pct(gainPct);pctEl.className='note '+(gain>=0?'good-text':'bad-text');
  if(!items.length)box.innerHTML='<div class="empty">עדיין לא הוספתם השקעות. אפשר לתת לכל השקעה שם משלכם.</div>';
- else box.innerHTML=items.map(x=>{const gain=num(x.currentILS)-num(x.costILS),gp=num(x.costILS)?gain/num(x.costILS):0;return `<div class="investment-item"><div><strong>${escapeHtml(x.name)}</strong><div class="note">${totalValue?pct(num(x.currentILS)/totalValue):'0%'} מהתיק</div></div><div class="metric">הושקע<strong>${money(x.costILS)}</strong></div><div class="metric">שווי נוכחי<strong>${money(x.currentILS)}</strong></div><div class="metric">רווח / הפסד<strong class="${gain>=0?'good-text':'bad-text'}">${gain>=0?'+':''}${money(gain)}</strong></div><div class="metric">תשואה<strong class="${gain>=0?'good-text':'bad-text'}">${gain>=0?'+':''}${pct(gp)}</strong></div><div class="row-actions"><button class="secondary edit-investment" data-id="${x.id}" type="button">עריכה</button><button class="tx-del delete-investment" data-id="${x.id}" type="button">מחיקה</button></div></div>`}).join('');
+ else box.innerHTML=items.map(x=>{const currentILS=investmentCurrentILS(x),costILS=investmentCostILS(x),gain=currentILS-costILS,gp=costILS?gain/costILS:0;return `<div class="investment-item"><div><strong>${escapeHtml(x.name)}</strong><div class="note">${x.currency} · ${totalValue?pct(currentILS/totalValue):'0%'} מהתיק</div></div><div class="metric">הושקע<strong>${money(costILS)}</strong></div><div class="metric">שווי נוכחי<strong>${money(currentILS)}</strong></div><div class="metric">רווח / הפסד<strong class="${gain>=0?'good-text':'bad-text'}">${gain>=0?'+':''}${money(gain)}</strong></div><div class="metric">תשואה<strong class="${gain>=0?'good-text':'bad-text'}">${gain>=0?'+':''}${pct(gp)}</strong></div><div class="row-actions"><button class="secondary edit-investment" data-id="${x.id}" type="button">עריכה</button><button class="tx-del delete-investment" data-id="${x.id}" type="button">מחיקה</button></div></div>`}).join('');
  box.querySelectorAll('.edit-investment').forEach(b=>b.addEventListener('click',()=>editInvestment(b.dataset.id)));
  box.querySelectorAll('.delete-investment').forEach(b=>b.addEventListener('click',()=>deleteInvestment(b.dataset.id)));
  const pie=document.getElementById('portfolioPie'),legend=document.getElementById('portfolioPieLegend');
  if(!totalValue){pie.style.background='#e8e3dc';legend.innerHTML='<div class="empty">הוסיפו השקעות כדי לראות את חלוקת התיק.</div>';return}
- let acc=0,segments=[];items.filter(x=>num(x.currentILS)>0).forEach((x,i)=>{const start=acc/totalValue*360;acc+=num(x.currentILS);segments.push(`${pieColors[i%pieColors.length]} ${start}deg ${acc/totalValue*360}deg`)});pie.style.background=`conic-gradient(${segments.join(',')})`;
- legend.innerHTML=items.filter(x=>num(x.currentILS)>0).map((x,i)=>`<div class="pie-line"><span class="pie-color" style="background:${pieColors[i%pieColors.length]}"></span><span>${escapeHtml(x.name)} <span class="note">(${pct(num(x.currentILS)/totalValue)})</span></span><strong dir="ltr">${money(x.currentILS)}</strong></div>`).join('');
+ let acc=0,segments=[];items.filter(x=>investmentCurrentILS(x)>0).forEach((x,i)=>{const v=investmentCurrentILS(x),start=acc/totalValue*360;acc+=v;segments.push(`${pieColors[i%pieColors.length]} ${start}deg ${acc/totalValue*360}deg`)});pie.style.background=`conic-gradient(${segments.join(',')})`;
+ legend.innerHTML=items.filter(x=>investmentCurrentILS(x)>0).map((x,i)=>{const v=investmentCurrentILS(x);return `<div class="pie-line"><span class="pie-color" style="background:${pieColors[i%pieColors.length]}"></span><span>${escapeHtml(x.name)} <span class="note">(${pct(v/totalValue)})</span></span><strong dir="ltr">${money(v)}</strong></div>`}).join('');
 }
 
+function recurringAmountILS(x){return toILS(num(x.amount),x.currency||'ILS')}
 function addRecurring(){
  const name=document.getElementById('recurringName').value.trim(),amount=num(document.getElementById('recurringAmount').value),category=document.getElementById('recurringCategory').value,cur=document.getElementById('recurringCurrency').value;
  if(!name){alert('כתבו שם להוצאה הקבועה');return}if(amount<=0){alert('הזינו סכום גדול מ־0');return}
- recurringExpenses.push({id:String(Date.now())+Math.random().toString(16).slice(2),name,amountILS:toILS(amount,cur),category});
+ recurringExpenses.push({id:String(Date.now())+Math.random().toString(16).slice(2),name,amount,currency:cur,category});
  document.getElementById('recurringName').value='';document.getElementById('recurringAmount').value='';persist();renderRecurring();
 }
 function editRecurring(id){
  const x=recurringExpenses.find(x=>String(x.id)===String(id));if(!x)return;
- const name=prompt('שם ההוצאה הקבועה',x.name);if(name===null)return;const amount=prompt('סכום בשקלים',String(Math.round(x.amountILS)));if(amount===null)return;
- if(!name.trim()||num(amount)<=0)return;x.name=name.trim();x.amountILS=num(amount);persist();renderRecurring();
+ const name=prompt('שם ההוצאה הקבועה',x.name);if(name===null)return;
+ const currency=prompt('מטבע: ILS או USD',x.currency||'ILS');if(currency===null)return;const cur=String(currency).trim().toUpperCase();if(!['ILS','USD'].includes(cur)){alert('המטבע צריך להיות ILS או USD');return}
+ const amount=prompt(`סכום ב${cur}`,String(num(x.amount)));if(amount===null)return;
+ if(!name.trim()||num(amount)<=0)return;x.name=name.trim();x.amount=num(amount);x.currency=cur;persist();renderRecurring();
 }
 function deleteRecurring(id){recurringExpenses=recurringExpenses.filter(x=>String(x.id)!==String(id));persist();renderRecurring()}
 function renderRecurring(){
  const box=document.getElementById('recurringList');if(!recurringExpenses.length){box.innerHTML='<div class="empty">אין עדיין הוצאות קבועות שמורות.</div>';return}
- box.innerHTML=recurringExpenses.map(x=>`<div class="tx-item"><div class="tx-main"><div class="tx-title">${escapeHtml(x.name)}</div><div class="tx-meta">${escapeHtml(categoryInfo[x.category]?.title||'')}</div></div><div style="display:flex;align-items:center;gap:8px"><strong dir="ltr">${money(x.amountILS)}</strong><button class="secondary edit-recurring" data-id="${x.id}" type="button">עריכה</button><button class="tx-del delete-recurring" data-id="${x.id}" type="button">מחיקה</button></div></div>`).join('');
+ box.innerHTML=recurringExpenses.map(x=>`<div class="tx-item"><div class="tx-main"><div class="tx-title">${escapeHtml(x.name)}</div><div class="tx-meta">${escapeHtml(categoryInfo[x.category]?.title||'')} · ${x.currency||'ILS'}</div></div><div style="display:flex;align-items:center;gap:8px"><strong dir="ltr">${money(recurringAmountILS(x))}</strong><button class="secondary edit-recurring" data-id="${x.id}" type="button">עריכה</button><button class="tx-del delete-recurring" data-id="${x.id}" type="button">מחיקה</button></div></div>`).join('');
  box.querySelectorAll('.edit-recurring').forEach(b=>b.addEventListener('click',()=>editRecurring(b.dataset.id)));box.querySelectorAll('.delete-recurring').forEach(b=>b.addEventListener('click',()=>deleteRecurring(b.dataset.id)));
 }
 function applyRecurringToMonth(m=current){
  const d=ensureMonthData(m);let added=0;
- recurringExpenses.forEach(x=>{if(!d.transactions.some(t=>String(t.recurringId||'')===String(x.id))){d.transactions.push({id:Date.now()+Math.random(),category:x.category,subcategory:'הוצאה קבועה',description:x.name,amount:x.amountILS,currency:'ILS',recurringId:x.id});added++}});
+ recurringExpenses.forEach(x=>{if(!d.transactions.some(t=>String(t.recurringId||'')===String(x.id))){d.transactions.push({id:Date.now()+Math.random(),category:x.category,subcategory:'הוצאה קבועה',description:x.name,amount:num(x.amount),currency:x.currency||'ILS',recurringId:x.id});added++}});
  persist();render();return added;
 }
 
@@ -636,12 +743,13 @@ function txTotal(category,m=current){
   return (d.transactions||[]).filter(t=>t.category===category).reduce((s,t)=>s+toILS(t.amount,t.currency),0);
 }
 function calc(m){
- const d=db[m]||defaults();
+ if(!db[m])return {gross:0,deductions:0,net:0,home:0,fun:0,invest:0,emp:0,free:0,assets:0,nw:0,investmentValue:0};
+ const d=ensureMonthData(m);
  const gross=incomeTotal(m);
- const deductions=num(d.tax)+num(d.ni)+num(d.health)+num(d.pensionEmployee)+num(d.studyEmployee)+num(d.otherDed);
+ const deductions=incomeDeductionsTotal(m);
  const net=gross-deductions;
  const home=txTotal('home',m), fun=txTotal('fun',m), invest=txTotal('invest',m);
- const emp=num(d.employerPension)+num(d.employerStudy)+num(d.employerOther);
+ const emp=incomeEmployerTotal(m);
  const free=net-home-fun-invest;
  const investmentValue=portfolioCurrent(m);
  const assets=num(d.cash)+investmentValue+num(d.otherAssets);
@@ -653,6 +761,7 @@ function persist(){
  localStorage.setItem(budgetKey,JSON.stringify(budgets));
  localStorage.setItem(goalsKey,JSON.stringify(investmentGoals));
  localStorage.setItem(recurringKey,JSON.stringify(recurringExpenses));
+ localStorage.setItem(financialGoalsKey,JSON.stringify(financialGoals));
  localStorage.setItem(storageKey+'_settings',JSON.stringify({
    displayCurrency:document.getElementById('displayCurrency').value,
    fxRate:fx()
@@ -708,7 +817,7 @@ function goalContributed(goalId){
    });
  });
  const g=investmentGoals.find(x=>String(x.id)===String(goalId));
- return total+(g?num(g.startingILS):0);
+ return total+(g?toILS(num(g.starting),g.currency||'ILS'):0);
 }
 function setMoney(id,n,secondaryId){
  const el=document.getElementById(id); if(el) el.textContent=money(n);
@@ -792,12 +901,13 @@ function renderBudgetSummary(){
  else status.textContent=`חרגתם מהתקציב ב־${money(aTotal-pTotal)}.`;
 }
 
+function goalTargetILS(g){return toILS(num(g.target),g.currency||'ILS')}
 function renderGoals(){
  const grid=document.getElementById('goalsGrid');
  if(!investmentGoals.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1">עדיין אין יעדי השקעה.</div>';return}
  grid.innerHTML=investmentGoals.map(g=>{
-   const currentValue=goalContributed(g.id),target=num(g.targetILS),progress=target?currentValue/target:0,remaining=Math.max(0,target-currentValue);
-   return `<div class="goal-card"><div class="goal-head"><div><strong>${escapeHtml(g.name)}</strong><div class="note">${Math.min(progress*100,999).toFixed(1)}% מהיעד</div></div>
+   const currentValue=goalContributed(g.id),target=goalTargetILS(g),progress=target?currentValue/target:0,remaining=Math.max(0,target-currentValue);
+   return `<div class="goal-card"><div class="goal-head"><div><strong>${escapeHtml(g.name)}</strong><div class="note">${g.currency||'ILS'} · ${Math.min(progress*100,999).toFixed(1)}% מהיעד</div></div>
    <div class="goal-actions"><button class="secondary edit-goal" data-id="${g.id}" type="button">עריכה</button><button class="secondary delete-goal" data-id="${g.id}" type="button">מחיקה</button></div></div>
    <div class="goal-value">${money(currentValue)} <span class="note">מתוך ${money(target)}</span></div>
    <div class="goal-progress"><div style="width:${Math.min(100,progress*100)}%"></div></div>
@@ -809,17 +919,18 @@ function renderGoals(){
 function addGoal(){
  const name=document.getElementById('goalName').value.trim(),target=num(document.getElementById('goalTarget').value),starting=num(document.getElementById('goalStarting').value),cur=document.getElementById('goalCurrency').value;
  if(!name){alert('כתבו שם ליעד');return}if(target<=0){alert('הזינו יעד גדול מ־0');return}
- investmentGoals.push({id:String(Date.now())+Math.random().toString(16).slice(2),name,targetILS:toILS(target,cur),startingILS:toILS(starting,cur)});
+ investmentGoals.push({id:String(Date.now())+Math.random().toString(16).slice(2),name,target,starting,currency:cur});
  document.getElementById('goalName').value='';document.getElementById('goalTarget').value='';document.getElementById('goalStarting').value='';
  persist();renderGoals();
 }
 function editGoal(id){
  const g=investmentGoals.find(x=>String(x.id)===String(id));if(!g)return;
  const name=prompt('שם היעד',g.name);if(name===null)return;
- const target=prompt('יעד כספי בשקלים',String(Math.round(g.targetILS)));if(target===null)return;
- const starting=prompt('סכום התחלתי שכבר קיים בשקלים',String(Math.round(g.startingILS||0)));if(starting===null)return;
+ const currency=prompt('מטבע: ILS או USD',g.currency||'ILS');if(currency===null)return;const cur=String(currency).trim().toUpperCase();if(!['ILS','USD'].includes(cur)){alert('המטבע צריך להיות ILS או USD');return}
+ const target=prompt(`יעד כספי ב${cur}`,String(num(g.target)));if(target===null)return;
+ const starting=prompt(`סכום התחלתי שכבר קיים ב${cur}`,String(num(g.starting||0)));if(starting===null)return;
  if(!name.trim()||num(target)<=0)return;
- g.name=name.trim();g.targetILS=num(target);g.startingILS=Math.max(0,num(starting));persist();renderGoals();render();
+ g.name=name.trim();g.currency=cur;g.target=num(target);g.starting=Math.max(0,num(starting));persist();renderGoals();render();
 }
 function deleteGoal(id){
  const g=investmentGoals.find(x=>String(x.id)===String(id));if(!g)return;
@@ -827,9 +938,83 @@ function deleteGoal(id){
  investmentGoals=investmentGoals.filter(x=>String(x.id)!==String(id));persist();renderGoals();
 }
 
+
+async function updateCurrentFx(){
+ const btn=document.getElementById('updateFx'),status=document.getElementById('fxStatus');
+ btn.disabled=true;status.textContent='מעדכן…';
+ try{
+   let rate=0,date='';
+   try{
+     const resp=await fetch('https://www.boi.org.il/PublicApi/GetExchangeRate?key=USD',{cache:'no-store'});
+     if(resp.ok){
+       const data=await resp.json();
+       rate=num(data?.currentExchangeRate ?? data?.CurrentExchangeRate ?? data?.rate);
+       date=data?.lastUpdate || data?.LastUpdate || '';
+     }
+   }catch(e){}
+   if(rate<=0){
+     const resp=await fetch('https://api.frankfurter.app/latest?from=USD&to=ILS',{cache:'no-store'});
+     if(!resp.ok)throw new Error('network');
+     const data=await resp.json();rate=num(data?.rates?.ILS);date=data?.date||'';
+   }
+   if(rate<=0)throw new Error('rate');
+   document.getElementById('fxRate').value=rate.toFixed(4);persist();render();
+   status.textContent=`עודכן: $1 = ₪${rate.toFixed(4)}${date?' · '+String(date).slice(0,10):''}`;
+ }catch(e){status.textContent='לא הצלחתי לעדכן אוטומטית';alert('לא הצלחתי לקבל שער דולר נוכחי. אפשר להשאיר או לעדכן את השער ידנית.');}
+ finally{btn.disabled=false}
+}
+
+function financialGoalTargetILS(g){return toILS(num(g.target),g.currency||'ILS')}
+function financialGoalCurrentILS(g){return toILS(num(g.current),g.currency||'ILS')}
+function addFinancialGoal(){
+ const name=document.getElementById('financialGoalName').value.trim(),target=num(document.getElementById('financialGoalTarget').value),currentAmount=num(document.getElementById('financialGoalCurrent').value),date=document.getElementById('financialGoalDate').value,cur=document.getElementById('financialGoalCurrency').value;
+ if(!name){alert('כתבו שם למטרה');return}if(target<=0){alert('הזינו סכום יעד גדול מ־0');return}
+ financialGoals.push({id:String(Date.now())+Math.random().toString(16).slice(2),name,target,current:currentAmount,currency:cur,targetDate:date||''});
+ ['financialGoalName','financialGoalTarget','financialGoalCurrent','financialGoalDate'].forEach(id=>document.getElementById(id).value='');persist();renderFinancialGoals();
+}
+function editFinancialGoal(id){
+ const g=financialGoals.find(x=>String(x.id)===String(id));if(!g)return;
+ const name=prompt('שם המטרה',g.name);if(name===null)return;
+ const currency=prompt('מטבע: ILS או USD',g.currency||'ILS');if(currency===null)return;const curCode=String(currency).trim().toUpperCase();if(!['ILS','USD'].includes(curCode)){alert('המטבע צריך להיות ILS או USD');return}
+ const target=prompt(`סכום יעד ב${curCode}`,String(num(g.target)));if(target===null)return;
+ const currentAmount=prompt(`כמה כבר יש — ב${curCode}`,String(num(g.current||0)));if(currentAmount===null)return;
+ const date=prompt('תאריך יעד בפורמט YYYY-MM-DD (אפשר להשאיר ריק)',g.targetDate||'');if(date===null)return;
+ if(!name.trim()||num(target)<=0)return;g.name=name.trim();g.currency=curCode;g.target=num(target);g.current=Math.max(0,num(currentAmount));g.targetDate=date.trim();persist();renderFinancialGoals();
+}
+function deleteFinancialGoal(id){
+ const g=financialGoals.find(x=>String(x.id)===String(id));if(!g)return;if(!confirm(`למחוק את המטרה "${g.name}"?`))return;
+ financialGoals=financialGoals.filter(x=>String(x.id)!==String(id));persist();renderFinancialGoals();
+}
+function renderFinancialGoals(){
+ const box=document.getElementById('financialGoalsList');if(!box)return;
+ if(!financialGoals.length){box.innerHTML='<div class="empty">עדיין אין מטרות פיננסיות. הוסיפו מטרה ראשונה למעלה.</div>';return}
+ box.innerHTML=financialGoals.map(g=>{const target=financialGoalTargetILS(g),cur=financialGoalCurrentILS(g),progress=target?cur/target:0,remaining=Math.max(0,target-cur);let dateText='ללא תאריך יעד';if(g.targetDate){const d=new Date(g.targetDate+'T00:00:00');if(!Number.isNaN(d.getTime()))dateText=new Intl.DateTimeFormat('he-IL').format(d)}return `<div class="fin-goal"><div class="fin-goal-top"><div><strong>${escapeHtml(g.name)}</strong><div class="note">${g.currency||'ILS'} · ${dateText}</div></div><div class="row-actions"><button class="secondary edit-fin-goal" data-id="${g.id}" type="button">עריכה</button><button class="tx-del delete-fin-goal" data-id="${g.id}" type="button">מחיקה</button></div></div><div class="goal-value">${money(cur)} <span class="note">מתוך ${money(target)}</span></div><div class="goal-progress"><div style="width:${Math.min(100,progress*100)}%"></div></div><div class="goal-meta"><span>נשאר: ${money(remaining)}</span><span>${Math.min(progress*100,999).toFixed(1)}%</span></div></div>`}).join('');
+ box.querySelectorAll('.edit-fin-goal').forEach(b=>b.addEventListener('click',()=>editFinancialGoal(b.dataset.id)));box.querySelectorAll('.delete-fin-goal').forEach(b=>b.addEventListener('click',()=>deleteFinancialGoal(b.dataset.id)));
+}
+
+const payslipDbName='household_finance_payslips_v1',payslipStore='files';
+function openPayslipDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open(payslipDbName,1);req.onupgradeneeded=()=>{const dbx=req.result;if(!dbx.objectStoreNames.contains(payslipStore)){const store=dbx.createObjectStore(payslipStore,{keyPath:'id'});store.createIndex('month','month',{unique:false})}};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+async function putPayslip(record){const dbx=await openPayslipDb();return new Promise((resolve,reject)=>{const tx=dbx.transaction(payslipStore,'readwrite');tx.objectStore(payslipStore).put(record);tx.oncomplete=()=>{dbx.close();resolve()};tx.onerror=()=>{dbx.close();reject(tx.error)}})}
+async function getPayslips(month){const dbx=await openPayslipDb();return new Promise((resolve,reject)=>{const tx=dbx.transaction(payslipStore,'readonly'),store=tx.objectStore(payslipStore),idx=store.index('month'),req=idx.getAll(month);req.onsuccess=()=>{const out=req.result||[];dbx.close();resolve(out)};req.onerror=()=>{dbx.close();reject(req.error)}})}
+async function getPayslip(id){const dbx=await openPayslipDb();return new Promise((resolve,reject)=>{const req=dbx.transaction(payslipStore,'readonly').objectStore(payslipStore).get(id);req.onsuccess=()=>{const out=req.result;dbx.close();resolve(out)};req.onerror=()=>{dbx.close();reject(req.error)}})}
+async function removePayslip(id){const dbx=await openPayslipDb();return new Promise((resolve,reject)=>{const tx=dbx.transaction(payslipStore,'readwrite');tx.objectStore(payslipStore).delete(id);tx.oncomplete=()=>{dbx.close();resolve()};tx.onerror=()=>{dbx.close();reject(tx.error)}})}
+function renderPayslipSourceOptions(){const sel=document.getElementById('payslipSource');if(!sel)return;const selected=sel.value;sel.innerHTML='<option value="">ללא שיוך</option>'+ensureMonthData().incomeSources.map(x=>`<option value="${escapeHtml(x.id)}">${escapeHtml(x.name)}</option>`).join('');if([...sel.options].some(o=>o.value===selected))sel.value=selected}
+async function addPayslipFiles(){
+ const input=document.getElementById('payslipFiles'),files=[...(input.files||[])],status=document.getElementById('payslipStatus');if(!files.length){alert('בחרו לפחות קובץ אחד');return}
+ const sourceId=document.getElementById('payslipSource').value,source=ensureMonthData().incomeSources.find(x=>String(x.id)===String(sourceId));let saved=0;
+ for(const file of files){if(file.size>20*1024*1024){alert(`הקובץ ${file.name} גדול מ־20MB ולכן לא נשמר`);continue}await putPayslip({id:String(Date.now())+Math.random().toString(16).slice(2),month:current,sourceId:sourceId||'',sourceName:source?.name||'',fileName:file.name,fileType:file.type||'application/octet-stream',fileSize:file.size,addedAt:new Date().toISOString(),blob:file});saved++}
+ input.value='';status.textContent=saved?`נשמרו ${saved} תלושים בחודש ${monthLabel(current)}`:'';await renderPayslips();
+}
+async function openPayslipFile(id,download=false){const r=await getPayslip(id);if(!r)return;const url=URL.createObjectURL(r.blob);const a=document.createElement('a');a.href=url;if(download){a.download=r.fileName;document.body.appendChild(a);a.click();a.remove()}else{window.open(url,'_blank','noopener')}setTimeout(()=>URL.revokeObjectURL(url),30000)}
+async function deletePayslipFile(id){if(!confirm('למחוק את התלוש הזה?'))return;await removePayslip(id);await renderPayslips()}
+async function renderPayslips(){
+ const box=document.getElementById('payslipList');if(!box)return;document.getElementById('payslipMonthLabel').textContent=monthLabel(current);renderPayslipSourceOptions();
+ try{const items=(await getPayslips(current)).sort((a,b)=>String(b.addedAt).localeCompare(String(a.addedAt)));if(!items.length){box.innerHTML='<div class="empty">אין עדיין תלושים שמורים בחודש הזה.</div>';return}box.innerHTML=items.map(r=>`<div class="payslip-item"><div><strong>${escapeHtml(r.fileName)}</strong><div class="file-meta">${r.sourceName?'מקור: '+escapeHtml(r.sourceName)+' · ':''}${(r.fileSize/1024/1024).toFixed(2)} MB</div></div><div class="row-actions"><button class="secondary view-payslip" data-id="${r.id}" type="button">פתיחה</button><button class="secondary download-payslip" data-id="${r.id}" type="button">הורדה</button><button class="tx-del delete-payslip" data-id="${r.id}" type="button">מחיקה</button></div></div>`).join('');box.querySelectorAll('.view-payslip').forEach(b=>b.addEventListener('click',()=>openPayslipFile(b.dataset.id,false)));box.querySelectorAll('.download-payslip').forEach(b=>b.addEventListener('click',()=>openPayslipFile(b.dataset.id,true)));box.querySelectorAll('.delete-payslip').forEach(b=>b.addEventListener('click',()=>deletePayslipFile(b.dataset.id)))}catch(e){box.innerHTML='<div class="empty">לא ניתן לגשת לאחסון התלושים בדפדפן הזה.</div>'}
+}
+
 function render(){
  renderMonths(); const c=calc(current), d=db[current];
- setMoney('kGross',c.gross,'kGross2'); setMoney('kNet',c.net,'kNet2'); setMoney('kFree',c.free,'kFree2'); setMoney('kNW',c.nw,'kNW2');
+ setMoney('kGross',c.gross,'kGross2'); setMoney('kNet',c.net,'kNet2'); setMoney('kFree',c.free,'kFree2');
  setMoney('fTax',c.deductions); setMoney('fHome',c.home); setMoney('fFun',c.fun); setMoney('fInv',c.invest); setMoney('fEmp',c.emp);
  setMoney('homeTotal',c.home); setMoney('funTotal',c.fun); setMoney('investTotal',c.invest);
  document.getElementById('saveRate').textContent=pct(c.net?((c.invest+Math.max(c.free,0))/c.net):0);
@@ -855,11 +1040,11 @@ function render(){
    wrap.append(bars,lab);chart.appendChild(wrap);
  });
 
- setMoney('assetsTotal',c.assets);setMoney('debtTotal',d.debt);setMoney('netWorth2',c.nw);
+ setMoney('assetsTotal',c.assets);setMoney('debtTotal',d.debt);
  setMoney('sGross',c.gross);setMoney('sTax',c.deductions);setMoney('sNet',c.net);setMoney('sSpend',c.home+c.fun);setMoney('sSurplus',c.free+c.invest);
- setMoney('bCash',d.cash);setMoney('bInv',c.investmentValue);setMoney('bOther',d.otherAssets);setMoney('bDebt',d.debt);setMoney('bNW',c.nw);
+ setMoney('bCash',d.cash);setMoney('bInv',c.investmentValue);setMoney('bOther',d.otherAssets);setMoney('bDebt',d.debt);
  setMoney('cIn',c.net);setMoney('cHome',c.home);setMoney('cFun',c.fun);setMoney('cInv',c.invest);setMoney('cFree',c.free);
- renderRecent(); renderTopExpenses(); renderBudgetEditors(); renderGoals(); renderIncomeSources(); renderInvestments(); renderRecurring(); forecast();
+ renderRecent(); renderTopExpenses(); renderBudgetEditors(); renderGoals(); renderIncomeSources(); renderInvestments(); renderRecurring(); renderFinancialGoals(); renderPayslips(); forecast();
 }
 function forecast(){
  const c=calc(current),d=db[current];
@@ -929,7 +1114,7 @@ document.getElementById('addMonth').addEventListener('click',()=>{
  if(!db[candidate]){
    const prevKey=Object.keys(db).filter(m=>m<candidate).sort().pop();
    const fresh=defaults();
-   if(prevKey){const prevData=ensureMonthData(prevKey);fresh.incomeSources=(prevData.incomeSources||[]).map(x=>({...x,id:String(Date.now())+Math.random().toString(16).slice(2),amountILS:0}));fresh.investmentPositions=(prevData.investmentPositions||[]).map(x=>({...x,id:String(Date.now())+Math.random().toString(16).slice(2)}));}
+   if(prevKey){const prevData=ensureMonthData(prevKey);fresh.incomeSources=(prevData.incomeSources||[]).map(x=>{const n=newIncomeSource(x.name,0,x.currency||'ILS');return n});fresh.investmentPositions=(prevData.investmentPositions||[]).map(x=>({...x,id:String(Date.now())+Math.random().toString(16).slice(2)}));}
    db[candidate]=fresh;
  }
  current=candidate;
@@ -938,12 +1123,15 @@ document.getElementById('addMonth').addEventListener('click',()=>{
 });
 document.getElementById('displayCurrency').addEventListener('change',()=>{persist();render()});
 document.getElementById('fxRate').addEventListener('change',()=>{persist();render()});
+document.getElementById('updateFx').addEventListener('click',updateCurrentFx);
 document.getElementById('calcForecast').addEventListener('click',forecast);
 document.getElementById('emergencyMonths').addEventListener('input',forecast);
 document.getElementById('closeModal').addEventListener('click',closeCategory);
 document.getElementById('categoryModal').addEventListener('click',e=>{if(e.target.id==='categoryModal')closeCategory()});
 document.getElementById('addTransaction').addEventListener('click',addTransaction);
 document.getElementById('addGoal').addEventListener('click',addGoal);
+document.getElementById('addFinancialGoal').addEventListener('click',addFinancialGoal);
+document.getElementById('addPayslips').addEventListener('click',addPayslipFiles);
 document.getElementById('addIncomeSource').addEventListener('click',addIncomeSource);
 document.getElementById('addInvestment').addEventListener('click',addInvestment);
 document.getElementById('addRecurring').addEventListener('click',addRecurring);
@@ -956,7 +1144,7 @@ document.getElementById('customSub').addEventListener('click',()=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCategory()});
 
 document.getElementById('exportBackup').addEventListener('click',()=>{
- const payload={version:4,exportedAt:new Date().toISOString(),db,budgets,investmentGoals,recurringExpenses,settings:{
+ const payload={version:5,exportedAt:new Date().toISOString(),db,budgets,investmentGoals,recurringExpenses,financialGoals,settings:{
    displayCurrency:document.getElementById('displayCurrency').value,
    fxRate:fx()
  }};
@@ -978,6 +1166,11 @@ document.getElementById('importBackup').addEventListener('change',async e=>{
    if(payload.budgets&&typeof payload.budgets==='object')budgets=payload.budgets;
    if(Array.isArray(payload.investmentGoals))investmentGoals=payload.investmentGoals;
    if(Array.isArray(payload.recurringExpenses))recurringExpenses=payload.recurringExpenses;
+   if(Array.isArray(payload.financialGoals))financialGoals=payload.financialGoals;
+   recurringExpenses.forEach(x=>{if(!x.currency)x.currency='ILS';if(x.amount===undefined)x.amount=num(x.amountILS)});
+   investmentGoals.forEach(g=>{if(!g.currency)g.currency='ILS';if(g.target===undefined)g.target=num(g.targetILS);if(g.starting===undefined)g.starting=num(g.startingILS)});
+   financialGoals.forEach(g=>{if(!g.currency)g.currency='ILS';if(g.target===undefined)g.target=num(g.targetILS);if(g.current===undefined)g.current=num(g.currentILS)});
+   Object.keys(db).forEach(m=>ensureMonthData(m));
    const months=Object.keys(db).sort();
    if(!db[current]&&months.length)current=months[months.length-1];
    if(payload.settings){
