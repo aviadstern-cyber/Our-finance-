@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>המערכת הפיננסית שלנו</title>
+<meta name="theme-color" content="#f5f2ed">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="הכסף שלנו">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<style>
+:root{
+  --bg:#f5f2ed;--panel:#fffdf9;--ink:#24323a;--muted:#778187;--line:#e7e1da;
+  --blue:#c8dae7;--teal:#c9ddd8;--gold:#ead8a8;--rose:#edccc5;--lav:#ddd4ea;--sage:#dde6cf;
+  --accent:#334d5c;--good:#3a6f5c;--bad:#a44d4d;--white:#fff;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,"Noto Sans Hebrew",sans-serif;background:var(--bg);color:var(--ink)}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:1180px;margin:auto;padding:20px}
+.top{display:flex;gap:16px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px}
+h1{font-size:30px;margin:0}.sub{color:var(--muted);margin-top:6px}
+.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.monthbox,.currencybox{display:flex;gap:8px;align-items:center;background:var(--panel);padding:8px 10px;border-radius:16px;border:1px solid var(--line)}
+select,input{border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;min-height:42px;min-width:0}
+button{border:0;border-radius:12px;padding:10px 14px;background:var(--accent);color:white}
+button.secondary{background:#ece8e2;color:var(--ink)}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tab{background:#e9e5df;color:var(--ink)} .tab.active{background:var(--accent);color:#fff}
+.view{display:none}.view.active{display:block}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px}
+.kpi{min-height:138px;display:flex;flex-direction:column;justify-content:space-between}
+.kpi .label{color:var(--muted);font-size:14px}.kpi .value{font-size:28px;font-weight:700;direction:ltr;text-align:right}
+.secondary-value{font-size:12px;color:var(--muted);direction:ltr;text-align:right;margin-top:3px}
+.blue{background:var(--blue)}.teal{background:var(--teal)}.gold{background:var(--gold)}.rose{background:var(--rose)}.lav{background:var(--lav)}.sage{background:var(--sage)}
+.section-title{font-size:18px;font-weight:700;margin:24px 0 12px}
+.money-flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.flow{padding:16px;border-radius:18px;min-height:112px;border:1px solid transparent;transition:.15s ease}
+.flow.clickable:hover{transform:translateY(-1px);border-color:#bfb8ae}.flow.clickable{cursor:pointer}
+.flow .n{font-size:22px;font-weight:700;margin-top:12px;direction:ltr;text-align:right}
+.flow .hint{font-size:11px;color:var(--muted);margin-top:8px}
+.panelrow{display:grid;grid-template-columns:1.4fr 1fr;gap:14px}
+.chart{height:270px;display:flex;align-items:end;gap:8px;padding:18px 8px 6px;border-bottom:1px solid var(--line)}
+.barwrap{flex:1;display:flex;flex-direction:column;justify-content:end;align-items:center;gap:5px;height:100%}
+.bars{display:flex;gap:3px;align-items:end;height:90%;width:100%;justify-content:center}
+.bar{width:12px;border-radius:7px 7px 2px 2px;background:var(--accent);min-height:2px}
+.barlabel{font-size:11px;color:var(--muted)}
+.formgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:13px;color:var(--muted)}
+.statement{display:grid;grid-template-columns:1fr 1fr;gap:8px}.row{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.row strong{direction:ltr;text-align:left}
+.big-result{font-size:34px;font-weight:800;direction:ltr;text-align:right;margin:10px 0}
+.note{color:var(--muted);font-size:13px;line-height:1.5}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;background:#ece8e2;color:var(--muted);font-size:12px}
+.progress{height:12px;background:#ebe6df;border-radius:999px;overflow:hidden}.progress>div{height:100%;background:var(--accent)}
+.category-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.category-card{min-height:155px;cursor:pointer;position:relative;overflow:hidden}
+.category-card .cat-total{font-size:26px;font-weight:800;direction:ltr;text-align:right;margin-top:16px}
+.category-card .arrow{position:absolute;left:16px;bottom:14px;color:var(--muted);font-size:13px}
+.tx-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.tx-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.tx-main{min-width:0}.tx-title{font-weight:700}.tx-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.tx-amount{font-weight:800;direction:ltr;white-space:nowrap}
+.tx-del{background:#f2e7e4;color:var(--bad);padding:7px 9px}
+.empty{padding:20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(20,28,33,.36);z-index:20;padding:18px;align-items:center;justify-content:center}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--panel);width:min(760px,100%);max-height:88vh;overflow:auto;border-radius:24px;padding:20px;border:1px solid var(--line)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;top:0;background:var(--panel);padding-bottom:10px;z-index:1}
+.modal-head h2{margin:0}.close{background:#ece8e2;color:var(--ink)}
+.addtx{display:grid;grid-template-columns:1.2fr 1fr 1fr .8fr;gap:10px;align-items:end;margin-top:12px}
+.smalllabel{font-size:12px;color:var(--muted)}
+.pillrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill{background:#ece8e2;color:var(--ink);padding:7px 10px;border-radius:999px;font-size:12px}
+@media(max-width:900px){.grid4,.grid3,.money-flow,.formgrid,.panelrow,.category-grid,.statement,.addtx{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.grid4,.grid3,.money-flow,.formgrid,.panelrow,.category-grid,.statement,.addtx{grid-template-columns:1fr}.app{padding:12px}h1{font-size:24px}.modal{padding:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div><h1>המערכת הפיננסית שלנו</h1><div class="sub">מערכת חודשית חיה — ניתנת לעריכה, עם פירוט עסקאות ותתי־קטגוריות</div></div>
+    <div class="controls">
+      <div class="currencybox">
+        <span>תצוגה</span>
+        <select id="displayCurrency"><option value="ILS">₪ שקל</option><option value="USD">$ דולר</option></select>
+        <span>שער $</span><input id="fxRate" type="number" step="0.01" min="0.01" value="3.50" style="width:84px" title="כמה שקלים שווה דולר אחד">
+      </div>
+      <div class="monthbox"><span>חודש</span><select id="monthSelect"></select><button id="addMonth">חודש חדש</button></div>
+      <div class="monthbox">
+        <button id="exportBackup" class="secondary" type="button">גיבוי</button>
+        <label class="secondary" style="padding:10px 14px;border-radius:12px;cursor:pointer">שחזור<input id="importBackup" type="file" accept="application/json" style="display:none"></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-view="dashboard">בית</button>
+    <button class="tab" data-view="income">הכנסות ושכר</button>
+    <button class="tab" data-view="expenses">הוצאות</button>
+    <button class="tab" data-view="investments">השקעות ונכסים</button>
+    <button class="tab" data-view="statements">שלושת הדוחות</button>
+    <button class="tab" data-view="forecast">תחזית ו-DCF</button>
+  </div>
+
+  <section id="dashboard" class="view active">
+    <div class="grid4">
+      <div class="card kpi blue"><div class="label">ברוטו החודש</div><div><div class="value" id="kGross">₪0</div><div class="secondary-value" id="kGross2">$0</div></div></div>
+      <div class="card kpi teal"><div class="label">נטו שנכנס לחשבון</div><div><div class="value" id="kNet">₪0</div><div class="secondary-value" id="kNet2">$0</div></div></div>
+      <div class="card kpi gold"><div class="label">נשאר בסוף החודש</div><div><div class="value" id="kFree">₪0</div><div class="secondary-value" id="kFree2">$0</div></div></div>
+      <div class="card kpi lav"><div class="label">שווי נקי</div><div><div class="value" id="kNW">₪0</div><div class="secondary-value" id="kNW2">$0</div></div></div>
+    </div>
+
+    <div class="section-title">לאן הכסף הלך?</div>
+    <div class="money-flow">
+      <div class="flow rose"><div>מסים וניכויים</div><div class="n" id="fTax">₪0</div><div class="hint">מתעדכן מנתוני השכר</div></div>
+      <div class="flow sage clickable" data-category="home"><div>בית ומחיה</div><div class="n" id="fHome">₪0</div><div class="hint">לחצי לפירוט: חשמל, שכירות, מים, סופר...</div></div>
+      <div class="flow lav clickable" data-category="fun"><div>פנאי ולא חובה</div><div class="n" id="fFun">₪0</div><div class="hint">לחצי והוסיפי למשל: באולינג, מסעדה, בגדים...</div></div>
+      <div class="flow gold clickable" data-category="invest"><div>השקעות וחיסכון</div><div class="n" id="fInv">₪0</div><div class="hint">לחצי לפירוט ההפקדות</div></div>
+      <div class="flow teal"><div>הפרשות מעסיק</div><div class="n" id="fEmp">₪0</div><div class="hint">פנסיה, השתלמות והטבות</div></div>
+    </div>
+
+    <div class="section-title">מגמה ויחס לחודשים קודמים</div>
+    <div class="panelrow">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center"><strong>6 חודשים אחרונים — נטו מול הוצאות</strong><span class="badge">אוטומטי</span></div>
+        <div id="trendChart" class="chart"></div>
+      </div>
+      <div class="card">
+        <strong>השוואה</strong>
+        <div class="row"><span>לעומת חודש קודם</span><strong id="mom">—</strong></div>
+        <div class="row"><span>לעומת ממוצע 5 חודשים</span><strong id="avg5">—</strong></div>
+        <div class="row"><span>שיעור חיסכון</span><strong id="saveRate">0%</strong></div>
+        <div class="row"><span>הוצאות חובה / נטו</span><strong id="fixedRate">0%</strong></div>
+        <div class="row"><span>חודשי חירום מכוסים</span><strong id="runway">0</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="income" class="view">
+    <div class="card">
+      <h2>הכנסות ושכר</h2>
+      <div class="note">כל שדה ניתן לעריכה. הזיני את הנתונים מתלושי השכר; המערכת מחשבת אוטומטית ברוטו → נטו → הפרשות.</div>
+      <div class="formgrid" id="incomeFields"></div>
+      <div class="actions"><button class="save">שמור חודש</button></div>
+    </div>
+  </section>
+
+  <section id="expenses" class="view">
+    <div class="section-title">קטגוריות הוצאה</div>
+    <div class="category-grid">
+      <div class="card sage category-card" data-category="home"><h3>בית ומחיה</h3><div class="note">חשמל, שכירות/משכנתא, מים, גז, ארנונה, סופר ועוד</div><div class="cat-total" id="homeTotal">₪0</div><div class="arrow">לחצי כדי לפתוח פירוט ←</div></div>
+      <div class="card lav category-card" data-category="fun"><h3>פנאי ולא חובה</h3><div class="note">מסעדות, באולינג, בגדים, בילויים, חופשות וקניות</div><div class="cat-total" id="funTotal">₪0</div><div class="arrow">לחצי כדי לפתוח פירוט ←</div></div>
+      <div class="card gold category-card" data-category="invest"><h3>חיסכון והשקעות</h3><div class="note">הפקדה לתיק השקעות, קרן חירום, חיסכון למטרה ועוד</div><div class="cat-total" id="investTotal">₪0</div><div class="arrow">לחצי כדי לפתוח פירוט ←</div></div>
+    </div>
+    <div class="section-title">העסקאות האחרונות החודש</div>
+    <div class="card"><div id="recentTransactions" class="tx-list"></div></div>
+  </section>
+
+  <section id="investments" class="view">
+    <div class="card">
+      <h2>השקעות ונכסים</h2>
+      <div class="note">הזיני את יתרות סוף החודש. אפשר לעבוד בשקלים או בדולרים — שדות ההזנה כאן נשמרים כמטבע בסיס בשקלים, ובתצוגה תראי גם את ההמרה לדולר.</div>
+      <div class="formgrid" id="assetFields"></div>
+      <div class="section-title">מצב הון</div>
+      <div class="grid3">
+        <div class="card blue"><div class="label">סה״כ נכסים</div><div class="big-result" id="assetsTotal">₪0</div></div>
+        <div class="card rose"><div class="label">סה״כ התחייבויות</div><div class="big-result" id="debtTotal">₪0</div></div>
+        <div class="card teal"><div class="label">שווי נקי</div><div class="big-result" id="netWorth2">₪0</div></div>
+      </div>
+      <div class="actions"><button class="save">שמור חודש</button></div>
+    </div>
+  </section>
+
+  <section id="statements" class="view">
+    <div class="grid3">
+      <div class="card">
+        <h3>דוח הכנסות</h3>
+        <div class="row"><span>ברוטו</span><strong id="sGross">₪0</strong></div>
+        <div class="row"><span>מסים וניכויים</span><strong id="sTax">₪0</strong></div>
+        <div class="row"><span>נטו</span><strong id="sNet">₪0</strong></div>
+        <div class="row"><span>הוצאות מחיה ופנאי</span><strong id="sSpend">₪0</strong></div>
+        <div class="row"><span>עודף חודשי</span><strong id="sSurplus">₪0</strong></div>
+      </div>
+      <div class="card">
+        <h3>מאזן</h3>
+        <div class="row"><span>מזומן</span><strong id="bCash">₪0</strong></div>
+        <div class="row"><span>השקעות</span><strong id="bInv">₪0</strong></div>
+        <div class="row"><span>נכסים אחרים</span><strong id="bOther">₪0</strong></div>
+        <div class="row"><span>התחייבויות</span><strong id="bDebt">₪0</strong></div>
+        <div class="row"><span>שווי נקי</span><strong id="bNW">₪0</strong></div>
+      </div>
+      <div class="card">
+        <h3>תזרים מזומנים</h3>
+        <div class="row"><span>נטו שנכנס</span><strong id="cIn">₪0</strong></div>
+        <div class="row"><span>הוצאות חובה</span><strong id="cHome">₪0</strong></div>
+        <div class="row"><span>הוצאות רשות</span><strong id="cFun">₪0</strong></div>
+        <div class="row"><span>השקעות</span><strong id="cInv">₪0</strong></div>
+        <div class="row"><span>תזרים חופשי</span><strong id="cFree">₪0</strong></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="forecast" class="view">
+    <div class="panelrow">
+      <div class="card">
+        <h2>תחזית עתידית</h2>
+        <div class="formgrid">
+          <div class="field"><label>צמיחת הכנסה שנתית %</label><input id="growthIncome" type="number" step="0.1" value="3"></div>
+          <div class="field"><label>אינפלציית הוצאות %</label><input id="inflation" type="number" step="0.1" value="2.5"></div>
+          <div class="field"><label>תשואה שנתית צפויה %</label><input id="returnRate" type="number" step="0.1" value="6"></div>
+          <div class="field"><label>שיעור היוון DCF %</label><input id="discount" type="number" step="0.1" value="5"></div>
+          <div class="field"><label>שנות תחזית</label><input id="years" type="number" min="1" max="30" value="10"></div>
+        </div>
+        <div class="actions"><button id="calcForecast">חשב תחזית</button></div>
+        <div class="section-title">שווי נוכחי של תזרים חופשי עתידי</div>
+        <div class="big-result" id="dcfValue">₪0</div>
+        <div class="note">DCF מותאם למשק בית: היוון העודף/החיסכון העתידי הצפוי, ולא הערכת שווי של חברה.</div>
+      </div>
+      <div class="card">
+        <h2>מטרות</h2>
+        <div class="field"><label>יעד קרן חירום — חודשים</label><input id="emergencyMonths" type="number" value="6"></div>
+        <div class="row"><span>יעד קרן חירום</span><strong id="emergencyTarget">₪0</strong></div>
+        <div class="row"><span>מזומן נוכחי</span><strong id="emergencyCash">₪0</strong></div>
+        <div class="row"><span>פער</span><strong id="emergencyGap">₪0</strong></div>
+        <div class="progress"><div id="emergencyProgress" style="width:0%"></div></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="categoryModal" class="modal-backdrop" aria-hidden="true">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h2 id="modalTitle">פירוט קטגוריה</h2><div class="note" id="modalSubtitle"></div></div>
+      <button class="close" id="closeModal">סגירה</button>
+    </div>
+    <div class="addtx">
+      <div class="field"><label>מה היה?</label><input id="txDescription" placeholder="לדוגמה: באולינג עם חברים"></div>
+      <div class="field"><label>תת־קטגוריה</label><select id="txSubcategory"></select></div>
+      <div class="field"><label>סכום</label><input id="txAmount" type="number" min="0" step="0.01" placeholder="0"></div>
+      <div class="field"><label>מטבע</label><select id="txCurrency"><option value="ILS">₪</option><option value="USD">$</option></select></div>
+    </div>
+    <div class="actions"><button id="addTransaction">הוסף הוצאה</button><button class="secondary" id="customSub">+ תת־קטגוריה חדשה</button></div>
+    <div class="section-title">עסקאות בקטגוריה</div>
+    <div id="categoryTransactions" class="tx-list"></div>
+  </div>
+</div>
+
+<script>
+const storageKey='household_finance_system_v2';
+const oldKey='household_finance_system_v1';
+const today=new Date();
+const ym=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+const num=n=>Number(n)||0;
+const pct=n=>(num(n)*100).toFixed(1)+'%';
+
+const categoryInfo={
+  home:{
+    title:'בית ומחיה',
+    subtitle:'כל הוצאות החובה והמחיה השוטפת',
+    subs:['שכירות / משכנתא','חשמל','מים','גז','ארנונה','סופר','אינטרנט / טלפון','ביטוחים','תחבורה','בריאות','תחזוקת בית','אחר']
+  },
+  fun:{
+    title:'פנאי ולא חובה',
+    subtitle:'כל מה שכיף ונחמד — אבל לא חובה כדי לחיות',
+    subs:['מסעדה','באולינג','קפה','בגדים','בילוי','קולנוע','חופשה','קניות','מתנות','תחביבים','אחר']
+  },
+  invest:{
+    title:'חיסכון והשקעות',
+    subtitle:'כסף שעובר לבניית העתיד',
+    subs:['תיק השקעות','קרן חירום','חיסכון למטרה','קרן השתלמות פרטית','פיקדון','אחר']
+  }
+};
+
+const defaults=()=>({
+  gross1:0,gross2:0,tax:0,ni:0,health:0,pensionEmployee:0,studyEmployee:0,otherDed:0,
+  employerPension:0,employerStudy:0,employerOther:0,
+  cash:0,investments:0,otherAssets:0,debt:0,
+  transactions:[]
+});
+
+let raw=localStorage.getItem(storageKey);
+if(!raw){
+  const old=localStorage.getItem(oldKey);
+  if(old){
+    try{
+      const oldDb=JSON.parse(old); const converted={};
+      Object.keys(oldDb).forEach(m=>{
+        converted[m]={...defaults(),...oldDb[m],transactions:[]};
+        const legacyMap=[
+          ['home','שכירות / משכנתא','rent'],['home','חשמל','electricity'],['home','מים','water'],['home','גז','gas'],
+          ['home','ארנונה','municipal'],['home','סופר','groceries'],['home','אינטרנט / טלפון','internet'],['home','ביטוחים','insurance'],
+          ['home','תחבורה','transport'],['home','אחר','otherHome'],
+          ['fun','מסעדה','restaurants'],['fun','בגדים','clothes'],['fun','בילוי','entertainment'],['fun','חופשה','travel'],
+          ['fun','קניות','shopping'],['fun','אחר','otherFun'],
+          ['invest','תיק השקעות','investmentContribution'],['invest','חיסכון למטרה','extraSavings']
+        ];
+        legacyMap.forEach(([cat,sub,key])=>{
+          const v=num(oldDb[m][key]); if(v>0) converted[m].transactions.push({id:Date.now()+Math.random(),category:cat,subcategory:sub,description:sub,amount:v,currency:'ILS'});
+        });
+      });
+      raw=JSON.stringify(converted);
+    }catch(e){}
+  }
+}
+let db=raw?JSON.parse(raw):{};
+let current=ym(today);
+if(!db[current]) db[current]=defaults();
+
+const settings=JSON.parse(localStorage.getItem(storageKey+'_settings')||'{"displayCurrency":"ILS","fxRate":3.5}');
+document.getElementById('displayCurrency').value=settings.displayCurrency||'ILS';
+document.getElementById('fxRate').value=settings.fxRate||3.5;
+
+const incomeDefs=[
+ ['gross1','ברוטו — אדם 1'],['gross2','ברוטו — אדם 2'],['tax','מס הכנסה'],['ni','ביטוח לאומי'],['health','מס בריאות'],
+ ['pensionEmployee','פנסיה עובד'],['studyEmployee','קרן השתלמות עובד'],['otherDed','ניכויים אחרים'],
+ ['employerPension','פנסיה מעסיק'],['employerStudy','קרן השתלמות מעסיק'],['employerOther','הטבות / הפרשות מעסיק אחרות']
+];
+const assetDefs=[['cash','מזומן ובנק'],['investments','שווי תיק השקעות'],['otherAssets','נכסים אחרים'],['debt','הלוואות / התחייבויות']];
+
+function makeFields(el,defs){
+ el.innerHTML='';
+ defs.forEach(([k,l])=>{
+   const d=document.createElement('div'); d.className='field';
+   d.innerHTML=`<label>${l} (₪)</label><input type="number" min="0" step="0.01" data-key="${k}">`;
+   el.appendChild(d);
+ });
+}
+makeFields(document.getElementById('incomeFields'),incomeDefs);
+makeFields(document.getElementById('assetFields'),assetDefs);
+
+function fx(){return Math.max(.0001,num(document.getElementById('fxRate').value)||3.5)}
+function toILS(amount,currency){return currency==='USD'?num(amount)*fx():num(amount)}
+function moneyILS(n){return new Intl.NumberFormat('he-IL',{style:'currency',currency:'ILS',maximumFractionDigits:0}).format(num(n))}
+function moneyUSD(n){return new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(num(n)/fx())}
+function money(n){
+  return document.getElementById('displayCurrency').value==='USD'?moneyUSD(n):moneyILS(n);
+}
+function moneyOther(n){
+  return document.getElementById('displayCurrency').value==='USD'?moneyILS(n):moneyUSD(n);
+}
+function txTotal(category,m=current){
+  const d=db[m]||defaults();
+  return (d.transactions||[]).filter(t=>t.category===category).reduce((s,t)=>s+toILS(t.amount,t.currency),0);
+}
+function calc(m){
+ const d=db[m]||defaults();
+ const gross=num(d.gross1)+num(d.gross2);
+ const deductions=num(d.tax)+num(d.ni)+num(d.health)+num(d.pensionEmployee)+num(d.studyEmployee)+num(d.otherDed);
+ const net=gross-deductions;
+ const home=txTotal('home',m), fun=txTotal('fun',m), invest=txTotal('invest',m);
+ const emp=num(d.employerPension)+num(d.employerStudy)+num(d.employerOther);
+ const free=net-home-fun-invest;
+ const assets=num(d.cash)+num(d.investments)+num(d.otherAssets);
+ const nw=assets-num(d.debt);
+ return {gross,deductions,net,home,fun,invest,emp,free,assets,nw};
+}
+function persist(){
+ localStorage.setItem(storageKey,JSON.stringify(db));
+ localStorage.setItem(storageKey+'_settings',JSON.stringify({
+   displayCurrency:document.getElementById('displayCurrency').value,
+   fxRate:fx()
+ }));
+}
+function saveInputs(){
+ document.querySelectorAll('[data-key]').forEach(i=>db[current][i.dataset.key]=num(i.value));
+ persist(); render();
+}
+function load(){
+ const d=db[current]||defaults();
+ document.querySelectorAll('[data-key]').forEach(i=>i.value=num(d[i.dataset.key]));
+ render();
+}
+function renderMonths(){
+ const sel=document.getElementById('monthSelect'); sel.innerHTML='';
+ Object.keys(db).sort().reverse().forEach(m=>{
+   const [y,mo]=m.split('-');
+   const op=document.createElement('option'); op.value=m;
+   op.textContent=new Intl.DateTimeFormat('he-IL',{month:'long',year:'numeric'}).format(new Date(+y,+mo-1,1));
+   sel.appendChild(op);
+ });
+ sel.value=current;
+}
+function previousMonth(m,offset=1){
+ const [y,mo]=m.split('-').map(Number); const d=new Date(y,mo-1-offset,1); return ym(d);
+}
+function setMoney(id,n,secondaryId){
+ const el=document.getElementById(id); if(el) el.textContent=money(n);
+ if(secondaryId){const s=document.getElementById(secondaryId); if(s) s.textContent=moneyOther(n)}
+}
+function renderRecent(){
+ const box=document.getElementById('recentTransactions');
+ const tx=[...(db[current].transactions||[])].slice().reverse().slice(0,8);
+ if(!tx.length){box.innerHTML='<div class="empty">עדיין אין עסקאות בחודש הזה. לחצי על אחת הקטגוריות והוסיפי הוצאה.</div>';return}
+ box.innerHTML='';
+ tx.forEach(t=>box.appendChild(txElement(t,false)));
+}
+function txElement(t,allowDelete=true){
+ const el=document.createElement('div'); el.className='tx-item';
+ const converted=toILS(t.amount,t.currency);
+ el.innerHTML=`<div class="tx-main"><div class="tx-title">${escapeHtml(t.description||t.subcategory)}</div><div class="tx-meta">${escapeHtml(categoryInfo[t.category]?.title||'')} · ${escapeHtml(t.subcategory||'')} · ${t.currency}</div></div><div style="display:flex;gap:8px;align-items:center"><div class="tx-amount">${money(converted)}</div>${allowDelete?'<button class="tx-del" type="button">מחיקה</button>':''}</div>`;
+ if(allowDelete) el.querySelector('.tx-del').addEventListener('click',()=>{db[current].transactions=db[current].transactions.filter(x=>x.id!==t.id);persist();render();renderModalTransactions(t.category)});
+ return el;
+}
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]))}
+
+function render(){
+ renderMonths(); const c=calc(current), d=db[current];
+ setMoney('kGross',c.gross,'kGross2'); setMoney('kNet',c.net,'kNet2'); setMoney('kFree',c.free,'kFree2'); setMoney('kNW',c.nw,'kNW2');
+ setMoney('fTax',c.deductions); setMoney('fHome',c.home); setMoney('fFun',c.fun); setMoney('fInv',c.invest); setMoney('fEmp',c.emp);
+ setMoney('homeTotal',c.home); setMoney('funTotal',c.fun); setMoney('investTotal',c.invest);
+ document.getElementById('saveRate').textContent=pct(c.net?((c.invest+Math.max(c.free,0))/c.net):0);
+ document.getElementById('fixedRate').textContent=pct(c.net?c.home/c.net:0);
+ document.getElementById('runway').textContent=c.home?(num(d.cash)/c.home).toFixed(1):'0';
+
+ const prev=calc(previousMonth(current,1));
+ document.getElementById('mom').textContent=prev.free?pct((c.free-prev.free)/Math.abs(prev.free)):'—';
+ let vals=[];for(let i=1;i<=5;i++){const m=previousMonth(current,i);if(db[m]) vals.push(calc(m).free)}
+ const a=vals.length?vals.reduce((x,y)=>x+y,0)/vals.length:0;
+ document.getElementById('avg5').textContent=a?pct((c.free-a)/Math.abs(a)):'—';
+
+ const chart=document.getElementById('trendChart'); chart.innerHTML='';
+ let points=[]; for(let i=5;i>=0;i--){let m=previousMonth(current,i);if(db[m])points.push([m,calc(m)])}
+ let mx=Math.max(1,...points.flatMap(x=>[Math.max(0,x[1].net),x[1].home+x[1].fun+x[1].invest]));
+ points.forEach(([m,x])=>{
+   const wrap=document.createElement('div');wrap.className='barwrap';
+   const bars=document.createElement('div');bars.className='bars';
+   const b1=document.createElement('div');b1.className='bar';b1.style.height=(Math.max(0,x.net)/mx*100)+'%';b1.style.background='var(--teal)';b1.title='נטו '+money(x.net);
+   const b2=document.createElement('div');b2.className='bar';b2.style.height=((x.home+x.fun+x.invest)/mx*100)+'%';b2.style.background='var(--rose)';b2.title='הוצאות '+money(x.home+x.fun+x.invest);
+   bars.append(b1,b2);
+   const lab=document.createElement('div');lab.className='barlabel';lab.textContent=m.slice(5);
+   wrap.append(bars,lab);chart.appendChild(wrap);
+ });
+
+ setMoney('assetsTotal',c.assets);setMoney('debtTotal',d.debt);setMoney('netWorth2',c.nw);
+ setMoney('sGross',c.gross);setMoney('sTax',c.deductions);setMoney('sNet',c.net);setMoney('sSpend',c.home+c.fun);setMoney('sSurplus',c.free+c.invest);
+ setMoney('bCash',d.cash);setMoney('bInv',d.investments);setMoney('bOther',d.otherAssets);setMoney('bDebt',d.debt);setMoney('bNW',c.nw);
+ setMoney('cIn',c.net);setMoney('cHome',c.home);setMoney('cFun',c.fun);setMoney('cInv',c.invest);setMoney('cFree',c.free);
+ renderRecent(); forecast();
+}
+function forecast(){
+ const c=calc(current),d=db[current];
+ const gi=num(document.getElementById('growthIncome').value)/100;
+ const inf=num(document.getElementById('inflation').value)/100;
+ const disc=num(document.getElementById('discount').value)/100;
+ const yrs=Math.max(1,Math.min(30,num(document.getElementById('years').value)||10));
+ let pv=0;
+ for(let y=1;y<=yrs;y++){
+   const annualNet=c.net*12*Math.pow(1+gi,y);
+   const annualSpend=(c.home+c.fun)*12*Math.pow(1+inf,y);
+   const annualInv=c.invest*12;
+   const fcf=annualNet-annualSpend-annualInv;
+   pv+=fcf/Math.pow(1+disc,y);
+ }
+ setMoney('dcfValue',pv);
+ const em=Math.max(1,num(document.getElementById('emergencyMonths').value)||6);
+ const target=c.home*em,cash=num(d.cash),gap=Math.max(0,target-cash);
+ setMoney('emergencyTarget',target);setMoney('emergencyCash',cash);setMoney('emergencyGap',gap);
+ document.getElementById('emergencyProgress').style.width=Math.min(100,target?cash/target*100:0)+'%';
+}
+let activeCategory='home';
+function openCategory(cat){
+ activeCategory=cat; const info=categoryInfo[cat];
+ document.getElementById('modalTitle').textContent=info.title;
+ document.getElementById('modalSubtitle').textContent=info.subtitle;
+ const sel=document.getElementById('txSubcategory'); sel.innerHTML='';
+ info.subs.forEach(s=>{const op=document.createElement('option');op.value=s;op.textContent=s;sel.appendChild(op)});
+ renderModalTransactions(cat);
+ const modal=document.getElementById('categoryModal'); modal.classList.add('open');modal.setAttribute('aria-hidden','false');
+ setTimeout(()=>document.getElementById('txDescription').focus(),50);
+}
+function closeCategory(){
+ const modal=document.getElementById('categoryModal');modal.classList.remove('open');modal.setAttribute('aria-hidden','true');
+}
+function renderModalTransactions(cat){
+ const box=document.getElementById('categoryTransactions');
+ const tx=(db[current].transactions||[]).filter(t=>t.category===cat).slice().reverse();
+ if(!tx.length){box.innerHTML='<div class="empty">אין עדיין עסקאות בקטגוריה הזו החודש.</div>';return}
+ box.innerHTML='';tx.forEach(t=>box.appendChild(txElement(t,true)));
+}
+function addTransaction(){
+ const description=document.getElementById('txDescription').value.trim();
+ const subcategory=document.getElementById('txSubcategory').value;
+ const amount=num(document.getElementById('txAmount').value);
+ const currency=document.getElementById('txCurrency').value;
+ if(amount<=0){alert('הזיני סכום גדול מ-0');return}
+ db[current].transactions=db[current].transactions||[];
+ db[current].transactions.push({id:Date.now()+Math.random(),category:activeCategory,subcategory,description:description||subcategory,amount,currency});
+ document.getElementById('txDescription').value='';document.getElementById('txAmount').value='';
+ persist();render();renderModalTransactions(activeCategory);
+}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+ document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));document.getElementById(b.dataset.view).classList.add('active');
+}));
+document.querySelectorAll('.save').forEach(b=>b.addEventListener('click',saveInputs));
+document.querySelectorAll('[data-category]').forEach(el=>el.addEventListener('click',()=>openCategory(el.dataset.category)));
+document.getElementById('monthSelect').addEventListener('change',e=>{saveInputs();current=e.target.value;load()});
+document.getElementById('addMonth').addEventListener('click',()=>{
+ const candidate=prompt('הקלידי חודש בפורמט YYYY-MM',ym(today));
+ if(!candidate||!/^\d{4}-(0[1-9]|1[0-2])$/.test(candidate)){if(candidate)alert('הפורמט צריך להיות YYYY-MM');return}
+ if(!db[candidate])db[candidate]=defaults();current=candidate;persist();load();
+});
+document.getElementById('displayCurrency').addEventListener('change',()=>{persist();render()});
+document.getElementById('fxRate').addEventListener('change',()=>{persist();render()});
+document.getElementById('calcForecast').addEventListener('click',forecast);
+document.getElementById('emergencyMonths').addEventListener('input',forecast);
+document.getElementById('closeModal').addEventListener('click',closeCategory);
+document.getElementById('categoryModal').addEventListener('click',e=>{if(e.target.id==='categoryModal')closeCategory()});
+document.getElementById('addTransaction').addEventListener('click',addTransaction);
+document.getElementById('customSub').addEventListener('click',()=>{
+ const s=prompt('שם תת־הקטגוריה החדשה');if(!s||!s.trim())return;
+ categoryInfo[activeCategory].subs.push(s.trim());
+ const op=document.createElement('option');op.value=s.trim();op.textContent=s.trim();document.getElementById('txSubcategory').appendChild(op);document.getElementById('txSubcategory').value=s.trim();
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCategory()});
+
+document.getElementById('exportBackup').addEventListener('click',()=>{
+ const payload={version:2,exportedAt:new Date().toISOString(),db,settings:{
+   displayCurrency:document.getElementById('displayCurrency').value,
+   fxRate:fx()
+ }};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement('a');
+ a.href=url;a.download='household-finance-backup.json';
+ document.body.appendChild(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),1000);
+});
+
+document.getElementById('importBackup').addEventListener('change',async e=>{
+ const file=e.target.files&&e.target.files[0]; if(!file)return;
+ try{
+   const payload=JSON.parse(await file.text());
+   const incoming=payload.db||payload;
+   if(!incoming||typeof incoming!=='object')throw new Error('bad');
+   db=incoming;
+   const months=Object.keys(db).sort();
+   if(!db[current]&&months.length)current=months[months.length-1];
+   if(payload.settings){
+     document.getElementById('displayCurrency').value=payload.settings.displayCurrency||'ILS';
+     document.getElementById('fxRate').value=payload.settings.fxRate||3.5;
+   }
+   persist();load();alert('הגיבוי שוחזר בהצלחה');
+ }catch(err){alert('לא הצלחתי לקרוא את קובץ הגיבוי');}
+ e.target.value='';
+});
+
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+ navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+load();
+</script>
+</body>
+</html>
